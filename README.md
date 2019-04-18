@@ -1,2 +1,2 @@
-# ds1
-Computational Statistics, Data Mining, Multivariate Statistics
+# Computational Statistics
+Hier könnte ihre Werbung stehen
