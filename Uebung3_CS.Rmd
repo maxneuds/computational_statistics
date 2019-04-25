@@ -91,12 +91,12 @@ BLABLABLA
 ```{r}
 packageTest('boot')
 bootdata <- rnorm(500,0,1)
-summe=0
-boot_mean <- function(original_vector, resample_vector) {
-   mean(original_vector[resample_vector])
+bootfunc <- function(x,d) {
+  x[d]
 }
-meanboot <- boot(x, boot_mean, R = 1000)
-meanboot <- meanboot$t
+boot <- boot(bootdata, bootfunc, R = 1000)
+boot <- boot$t
+meanboot <- colMeans(boot)
 
 par(mfrow=c(2,2))
 hist(meanboot)
