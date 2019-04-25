@@ -1,0 +1,115 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+header-includes: 
+    - \usepackage{amsthm}
+    - \usepackage{xcolor}
+documentclass: article
+<!---output: beamer_presentation--->
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
+                      collapse=TRUE,     # collapse by default
+                      echo=TRUE,         # echo code by default
+                      comment = "#>",    # change comment character
+                      fig.width = 10,     # set figure width
+                      out.width = "100%", # set width of displayed images
+                      warning=TRUE,      # show R warnings
+                      message=FALSE)     # show R messages
+
+packageTest<- function(x)  {
+    if (!require(x,character.only = TRUE))  {
+      install.packages(x,dep=TRUE)
+      if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+
+options(warn=-1)
+```
+
+
+<!--- Solution Region --->
+<style>
+#solution {
+  background-color: #8FBC8F;
+  border-style: solid;
+  border-color: blue;
+  margin-left: 20px;
+  margin-bottom: 15px;
+  padding: 5px;
+}
+</style>
+
+
+
+<!---**Sommersemester 2019 |Studiengang Data Science | Hochschule Darmstadt **--->
+
+
+
+
+\theoremstyle{break}
+\newtheorem{auf}{Aufgabe}
+
+\newcommand{\R}{{\sffamily R} }
+
+\begin{centering}
+%\vspace{-2 cm}
+\Huge
+{\bf Uebung 1}\\
+\Large
+Computational Statistics\\
+\normalsize
+Sommersemester 2019\\
+April 15, 2019\\
+J. Groos (FBMN, h\_da)\\
+\end{centering}
+
+
+\hrulefill
+
+**Name:**
+
+\hrulefill
+
+
+## A 1 
+###a)
+
+```{r}
+summe=0
+for (i in 1:1000){
+  summe=summe+rnorm(500,0,1)
+}
+meanssim <- summe/1000
+```
+BLABLABLA
+
+## A 1 
+###b)
+```{r}
+packageTest('boot')
+bootdata <- rnorm(500,0,1)
+summe=0
+boot_mean <- function(original_vector, resample_vector) {
+   mean(original_vector[resample_vector])
+}
+meanboot <- boot(x, boot_mean, R = 1000)
+meanboot <- meanboot$t
+
+par(mfrow=c(2,2))
+hist(meanboot)
+hist(meanssim)
+boxplot(meanboot)
+boxplot(meanssim)
+```
+Hier k??nnte ihre Interpretation stehen:
+
+## A 1 
+### c)
+```{r}
+
+```
+BLABLABLA 
+
