@@ -96,20 +96,41 @@ bootfunc <- function(x,d) {
 }
 boot <- boot(bootdata, bootfunc, R = 1000)
 boot <- boot$t
-meanboot <- colMeans(boot)
-
-par(mfrow=c(2,2))
-hist(meanboot)
-hist(meanssim)
-boxplot(meanboot)
-boxplot(meanssim)
+meansboot <- colMeans(boot)
 ```
 Hier k??nnte ihre Interpretation stehen:
 
 ## A 1 
 ### c)
 ```{r}
+hist(meansboot)
+hist(meanssim)
+boxplot(meansboot)
+boxplot(meanssim)
+
+shapiro.test(meansboot)
+shapiro.test(meanssim)
+```
+
+##A1
+### d)
+```{r}
+packageTest('car')
+levene <- c(meansboot,meanssim)
+levgroup <- as.factor(c(rep(1, length(meansboot)), rep(2, length(meanssim))))
+leveneTest(levene,levgroup)
+
+t.test(meansboot,meanssim,var.equal=TRUE)
+
 
 ```
-BLABLABLA 
+##A1
+### e)
 
+#Boxplot Histogramm blabla
+Shapiro Wilk in beiden F??lle insiginifikant. H0 wird also beibehalten, bei beiden Daten kann von einer Normalverteilung ausgegangen werden.
+Als Vorraussetzung f??r einen Zweistichproben T-Test wurden die Stichproben auf Varianzhomogenit??t ??berpr??ft. Der Levene Test ergab ein nichtsignifikantes Ergebnis, es kann daher von Varianshomogenit??t von meansboot und meanssim ausgegangen werden. 
+#T-Test nochmal machen wenn bootfunktion wirklich korrekt
+
+##A2
+### a)
