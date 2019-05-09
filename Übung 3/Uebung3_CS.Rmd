@@ -1,141 +1,4 @@
-<<<<<<< HEAD
----
-output:
-  pdf_document: default
-  html_document: default
-header-includes: 
-    - \usepackage{amsthm}
-    - \usepackage{xcolor}
-documentclass: article
-<!---output: beamer_presentation--->
----
 
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
-                      collapse=TRUE,     # collapse by default
-                      echo=TRUE,         # echo code by default
-                      comment = "#>",    # change comment character
-                      fig.width = 10,     # set figure width
-                      out.width = "100%", # set width of displayed images
-                      warning=TRUE,      # show R warnings
-                      message=FALSE)     # show R messages
-
-packageTest<- function(x)  {
-    if (!require(x,character.only = TRUE))  {
-      install.packages(x,dep=TRUE)
-      if(!require(x,character.only = TRUE)) stop("Package not found")
-    }
-}
-
-options(warn=-1)
-```
-
-
-<!--- Solution Region --->
-<style>
-#solution {
-  background-color: #8FBC8F;
-  border-style: solid;
-  border-color: blue;
-  margin-left: 20px;
-  margin-bottom: 15px;
-  padding: 5px;
-}
-</style>
-
-
-
-<!---**Sommersemester 2019 |Studiengang Data Science | Hochschule Darmstadt **--->
-
-
-
-
-\theoremstyle{break}
-\newtheorem{auf}{Aufgabe}
-
-\newcommand{\R}{{\sffamily R} }
-
-\begin{centering}
-%\vspace{-2 cm}
-\Huge
-{\bf Uebung 1}\\
-\Large
-Computational Statistics\\
-\normalsize
-Sommersemester 2019\\
-April 15, 2019\\
-J. Groos (FBMN, h\_da)\\
-\end{centering}
-
-
-\hrulefill
-
-**Name:**
-
-\hrulefill
-
-
-## A 1 
-###a)
-
-```{r}
-summe=0
-for (i in 1:1000){
-  summe=summe+rnorm(500,0,1)
-}
-meanssim <- summe/1000
-```
-BLABLABLA
-
-## A 1 
-###b)
-```{r}
-packageTest('boot')
-bootdata <- rnorm(500,0,1)
-bootfunc <- function(x,d) {
-  x[d]
-}
-boot <- boot(bootdata, bootfunc, R = 1000)
-boot <- boot$t
-meansboot <- colMeans(boot)
-```
-Hier k??nnte ihre Interpretation stehen:
-
-## A 1 
-### c)
-```{r}
-hist(meansboot)
-hist(meanssim)
-boxplot(meansboot)
-boxplot(meanssim)
-
-shapiro.test(meansboot)
-shapiro.test(meanssim)
-```
-
-##A1
-### d)
-```{r}
-packageTest('car')
-levene <- c(meansboot,meanssim)
-levgroup <- as.factor(c(rep(1, length(meansboot)), rep(2, length(meanssim))))
-leveneTest(levene,levgroup)
-
-t.test(meansboot,meanssim,var.equal=TRUE)
-
-
-```
-##A1
-### e)
-
-#Boxplot Histogramm blabla
-Shapiro Wilk in beiden F??lle insiginifikant. H0 wird also beibehalten, bei beiden Daten kann von einer Normalverteilung ausgegangen werden.
-Als Vorraussetzung f??r einen Zweistichproben T-Test wurden die Stichproben auf Varianzhomogenit??t ??berpr??ft. Der Levene Test ergab ein nichtsignifikantes Ergebnis, es kann daher von Varianshomogenit??t von meansboot und meanssim ausgegangen werden. 
-#T-Test nochmal machen wenn bootfunktion wirklich korrekt
-
-##A2
-### a)
-=======
 ---
 output:
   pdf_document: default
@@ -309,35 +172,33 @@ boot50_1 <- boot(data=Donald_1, statistic=theta, R=50, formula=Trump~.)
 par(mfrow=c(1,2))
 for (i in 1:6){
 plot(boot50_1, index=i, main=substitute(paste('boot_50: Coefficient ', i)))
-t.test(boot50_1$t[,i], mu=vergleich$coefficients[1])
+print(t.test(boot50_1$t[,i], mu=vergleich$coefficients[1]))
 }
 
 boot100_1 <- boot(data=Donald_1, statistic=theta, R=100, formula=Trump~.)
 par(mfrow=c(1,4))
 for (i in 1:6){
 plot(boot100_1, index=i, main= )
-t.test(boot100_1$t[,i], mu=vergleich$coefficients[1])
+print(t.test(boot100_1$t[,i], mu=vergleich$coefficients[1]))
 }
 
 boot1000_1 <- boot(data=Donald_1, statistic=theta, R=1000, formula=Trump~.)
 par(mfrow=c(1,4))
 for (i in 1:6){
 plot(boot1000_1, index=i)
-t.test(boot1000_1$t[,i], mu=vergleich$coefficients[1])
+print(t.test(boot1000_1$t[,i], mu=vergleich$coefficients[1]))
 }
 
 boot10000_1 <- boot(data=Donald_1, statistic=theta, R=10000, formula=Trump~.)
 par(mfrow=c(1,4))
 for (i in 1:6){
 plot(boot10000_1, index=i)
-t.test(boot10000_1$t[,i], mu=vergleich$coefficients[1])
+print(t.test(boot10000_1$t[,i], mu=vergleich$coefficients[1]))
 }
 ```
 
 ### b)
 ```{r}
-#install.packages('boot')
-library('boot')
 Konfi50 <- matrix(NA,6,2)
 rownames(Konfi50) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
 colnames(Konfi50) <- c("2,5","97,5")
