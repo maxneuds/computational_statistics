@@ -1,0 +1,105 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+header-includes: 
+    - \usepackage{amsthm}
+    - \usepackage{xcolor}
+documentclass: article
+<!---output: beamer_presentation--->
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
+                      collapse=TRUE,     # collapse by default
+                      echo=TRUE,         # echo code by default
+                      comment = "#>",    # change comment character
+                      fig.width = 10,     # set figure width
+                      out.width = "100%", # set width of displayed images
+                      warning=TRUE,      # show R warnings
+                      message=FALSE)     # show R messages
+packageTest<- function(x)  {
+    if (!require(x,character.only = TRUE))  {
+      install.packages(x,dep=TRUE)
+      if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+options(warn=-1)
+```
+
+
+<!--- Solution Region --->
+<style>
+#solution {
+  background-color: #8FBC8F;
+  border-style: solid;
+  border-color: blue;
+  margin-left: 20px;
+  margin-bottom: 15px;
+  padding: 5px;
+}
+</style>
+
+
+
+<!---**Sommersemester 2019 |Studiengang Data Science | Hochschule Darmstadt **--->
+
+
+
+
+\theoremstyle{break}
+\newtheorem{auf}{Aufgabe}
+
+\newcommand{\R}{{\sffamily R} }
+
+\begin{centering}
+%\vspace{-2 cm}
+\Huge
+{\bf Uebung 4: Shrinkage}\\
+\Large
+Computational Statistics\\
+\normalsize
+Sommersemester 2019\\
+April 15, 2019\\
+J. Groos (FBMN, h\_da)\\
+\end{centering}
+
+
+\hrulefill
+
+**Name:**
+
+\hrulefill
+
+# A1
+### a)
+
+```{r}
+packageTest("ElemStatLearn")
+
+linreg <- lm(lpsa~.-train, data = prostate)
+linreg_coeff <- linreg$coefficients
+linreg_coeff
+```
+
+```{r}
+packageTest("glmnet")
+
+ridgereg_0 <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 0, lambda = 0) 
+ridgereg_0_coeff = as.data.frame(as.matrix(ridgereg_0$beta))
+
+ridgereg_10 <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 0, lambda = 10) 
+ridgereg_10_coeff = as.data.frame(as.matrix(ridgereg_10$beta))
+
+ridgereg_coeffs <- data.frame(ridgereg_0_coeff, ridgereg_10_coeff, linreg_coeff)
+colnames(ridgereg_coeffs) <-  c("lambda_0", "lambda_10", "linreg")
+ridgereg_coeffs
+cat("Mean Coefficients Lambda = 0 \n")
+mean(ridgereg_coeffs$lambda_0)
+cat("\n")
+cat("Mean Coefficients Lambda = 10 \n")
+mean(ridgereg_coeffs$lambda_10)
+```
+
+Man sieht deutlich, dass ein größeres Lambda die Koeffizienten stärker "schrumpft" als ein kleines Lambda. Bei Lambda = 0 sind die Koeffizienten (bis auf den Intercept) nahezu identisch mit den geschätzten Koeffizienten des linearen Regressionsmodells. Im Falle Lambda = 10 sind zudem alle Koeffizienten positiv.
+
