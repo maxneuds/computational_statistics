@@ -105,11 +105,29 @@ invpois <- rbind(invpois,j)
 pois <-  rpois(10000,lambda)
 
 par(mfrow=c(1,2))
+
 hist(invexp)
 hist(exp)
 
 hist(invpois)
 hist(pois)
+
+qqplot(invexp,exp)
+qqplot(invpois,pois)
 ```
 
+###b)
+
+```{r}
+u <- runif(10000,0,1)
+v <- runif(10000,0,1)
+
+bmnorm = cos(2*pi*u)*sqrt(-log(v))
+norm <- rnorm(10000)
+
+par(mfrow=c(1,2))
+hist(bmnorm)
+hist(norm)
+qqplot(bmnorm,norm)
+```
 
