@@ -58,7 +58,7 @@ options(warn=-1)
 \begin{centering}
 %\vspace{-2 cm}
 \Huge
-{\bf Uebung 1}\\
+{\bf Uebung 6}\\
 \Large
 Computational Statistics\\
 \normalsize
@@ -131,3 +131,13 @@ hist(norm)
 qqplot(bmnorm,norm)
 ```
 
+## A 2
+###a)
+```{r}
+randomorg <- read.csv('randomorg.csv',header=FALSE)
+```
+
+###b)
+```{r}
+
+```
