@@ -1,0 +1,100 @@
+
+---
+output:
+  pdf_document: default
+  html_document: default
+header-includes: 
+    - \usepackage{amsthm}
+    - \usepackage{xcolor}
+documentclass: article
+<!---output: beamer_presentation--->
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
+                      collapse=TRUE,     # collapse by default
+                      echo=TRUE,         # echo code by default
+                      comment = "#>",    # change comment character
+                      fig.width = 10,     # set figure width
+                      out.width = "100%", # set width of displayed images
+                      warning=TRUE,      # show R warnings
+                      message=FALSE)     # show R messages
+
+packageTest<- function(x)  {
+    if (!require(x,character.only = TRUE))  {
+      install.packages(x,dep=TRUE)
+      if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+
+options(warn=-1)
+```
+
+
+<!--- Solution Region --->
+<style>
+#solution {
+  background-color: #8FBC8F;
+  border-style: solid;
+  border-color: blue;
+  margin-left: 20px;
+  margin-bottom: 15px;
+  padding: 5px;
+}
+</style>
+
+
+
+<!---**Sommersemester 2019 |Studiengang Data Science | Hochschule Darmstadt **--->
+
+
+
+
+\theoremstyle{break}
+\newtheorem{auf}{Aufgabe}
+
+\newcommand{\R}{{\sffamily R} }
+
+\begin{centering}
+%\vspace{-2 cm}
+\Huge
+{\bf Uebung 5}\\
+\Large
+Computational Statistics\\
+\normalsize
+Sommersemester 2019\\
+April 15, 2019\\
+J. Groos (FBMN, h\_da)\\
+\end{centering}
+
+
+\hrulefill
+
+**Name:**
+
+\hrulefill
+
+```{r}
+set.seed(42)
+```
+
+## A 1 
+###a)
+```{r}
+packageTest('ElemStatLearn')
+data <- subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45))
+cor(data)
+```
+
+###b)
+```{r}
+packageTest('pls')
+data <- subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45,lpsa))
+pcr <- pcr(lpsa~lcavol+lweight+age+lbph+svi+lcp+gleason+pgg45,data=data,validation = "CV",scale = TRUE)
+summary(pcr)
+```
+
+###c)
+```{r}
+
+```
