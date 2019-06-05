@@ -137,6 +137,7 @@ qqplot(bmnorm,norm)
 ###a)
 ```{r}
 randomorg <- read.csv('randomorg.csv',header=FALSE)
+randomorg <- randomorg[,"V1"]
 ```
 
 ###b)
@@ -151,5 +152,55 @@ midsqr = function(seed, length) {
     return(ergebnis)
 }
 midsqr = midsqr(2222222222222,10000)
-midsqr
+```
+
+###c)
+```{r}
+standardize <- function(x){(x-min(x))/(max(x)-min(x))}
+
+baumannikov_zwirbler <- function(seed, n){
+  if((seed %% 2) == 0){
+    seed <- seed +1
+  }
+  start <- as.character((seed*n)^2)
+  save <- c()
+  for (i in 1:(n)){
+    if (i == 1){
+      x <- start
+      k <- nchar(x)
+      y <- as.numeric(substr(as.numeric(x), round(0.25*k), round(0.75*k)))
+      save[i] <- y
+    }
+    else{
+      x <- as.character((save[i-1]*n)^2)
+      k <- nchar(x)
+      y <- as.numeric(substr(as.numeric(x), round(0.25*k), round(0.75*k)))
+      save[i] <- y
+    }
+  }
+  return(standardize(save%%100))
+}
+
+baumannikov_zwirbler <- baumannikov_zwirbler(22222222, 10000)
+```
+
+###d)
+```{r}
+set.seed(22222222,kind='Mersenne-Twister')
+mersenne <- runif(10000)
+
+set.seed(22222222,kind='Super-Duper')
+superduper <- runif(10000)
+```
+
+###e)
+```{r}
+par(mfrow=c(3,2))
+hist(randomorg)
+hist(midsqr)
+hist(baumannikov_zwirbler)
+hist(mersenne)
+hist(superduper)
+
+par(mfrow=c(1,1))
 ```
