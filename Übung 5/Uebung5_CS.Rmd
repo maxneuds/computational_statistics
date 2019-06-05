@@ -93,8 +93,12 @@ data <- subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45,
 pcr <- pcr(lpsa~lcavol+lweight+age+lbph+svi+lcp+gleason+pgg45,data=data,validation = "CV",scale = TRUE)
 summary(pcr)
 ```
-
 ###c)
 ```{r}
 
+```
+
+###d)
+```{r}
+validationplot(pcr)
 ```
