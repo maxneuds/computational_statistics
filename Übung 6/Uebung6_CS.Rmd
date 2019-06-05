@@ -93,12 +93,14 @@ j <- 0
 U <- runif(1,0,1)
 Y <- -(1/lambda)*log(U)
 sum <- Y
+
 while(sum < 1){
 U <-  runif(1,min = 0,max = 1) 
 Y <- -(1/lambda)*log(U)
 sum <-  sum + Y
 j <-  j + 1; 
 }
+
 invpois <- rbind(invpois,j)
 }
 
@@ -139,5 +141,15 @@ randomorg <- read.csv('randomorg.csv',header=FALSE)
 
 ###b)
 ```{r}
-
+midsqr = function(seed, length) {
+    ergebnis = c()
+    for(i in 1:length) {
+        value = seed * seed 
+        seed = (value %/% 10000) %% 10000000
+       ergebnis = c(ergebnis, seed/10000000)
+    }   
+    return(ergebnis)
+}
+midsqr = midsqr(2222222222222,10000)
+midsqr
 ```
