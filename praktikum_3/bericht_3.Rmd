@@ -56,7 +56,7 @@ options(warn=-1)
 \begin{centering}
 %\vspace{-2 cm}
 \Huge
-{\bf Uebung 1}\\
+{\bf Übung 3}\\
 \Large
 Computational Statistics\\
 \normalsize
@@ -100,7 +100,6 @@ bootfunc <- function(data,i) {
 }
 boot50 <- boot(bootdata, bootfunc, R = 50)
 boot50 <- boot50$t
-boot50
 boot1000 <- boot(bootdata, bootfunc, R = 1000)
 boot1000 <- boot1000$t
 hist(boot50)
@@ -125,24 +124,34 @@ shapiro.test(means1000)
 shapiro.test(boot50)
 shapiro.test(boot1000)
 ```
-Laut Shapiro-Wilks-Test kann f??r keine der vier Stichproben die Nullhypothese (Stichprobe ist normalverteilt) verworfen werden, auch wenn die Histogramme von boot50 und means50 nicht nach Normalverteilung aussehen.
+Laut Shapiro-Wilks-Test kann für keine der vier Stichproben die Nullhypothese (Stichprobe ist normalverteilt) verworfen werden, auch wenn die Histogramme von boot50 und means50 nicht nach Normalverteilung aussehen.
 
 
 ### d)
 ```{r}
 packageTest('car')
+
 levene50 <- c(means50,boot50)
+
 levene1000 <- c(means1000,boot1000)
+
 levgroup50 <- as.factor(c(rep(1, length(means50)), rep(2, length(boot50))))
+
+
 levgroup1000 <- as.factor(c(rep(1, length(means1000)), rep(2, length(boot1000))))
 leveneTest(levene50, levgroup50)
-cat('\n')
+
 leveneTest(levene1000, levgroup1000)
+
 t.test(means50, boot50, var.equal = TRUE)
-cat('\n')
+
 t.test(means1000, boot1000, var.equal = TRUE)
 ```
-FRAU GROOS FRAGEN, STIMMT DAS SO?
+Um t-Tests durchführen zu können, müssen die Gruppen erst auf Varianzhomogenität geprüft werden. Diese wird mit dem Levene-Test geprüft. Laut diesem ist die Varianzhomogenität sowohl für $\operatorname{Means}_{sim50}$ und $\operatorname{Means}_{boot50}$ und $\operatorname{Means}_{sim1000}$ und $\operatorname{Means}_{boot1000}$ gegeben. 
+
+Der t-Test zur Überprüfung der Mittelwerte von $\operatorname{Means}_{sim50}$ und $\operatorname{Means}_{boot50}$ lieferte ein insignifikantes Ergebnis. Aus diesem Grund kann die Nullhypothese ("Differenz der Mittelwerte gleich 0.") nicht verworfen werden. 
+
+Für die Mittelwerte von $\operatorname{Means}_{sim1000}$ und $\operatorname{Means}_{boot1000}$ kann die Nullhypothese mit einem Siginifkanzniveau von 95% verworfen werden.
 
 ## Aufgabe 2
 ### a)
@@ -154,37 +163,51 @@ theta <- function(formula, data, indices){
   fit <- lm(formula, data = d)
   return(coef(fit))
 }
+
+coef_names <- names(vergleich$coefficients)
+
 boot50_1 <- boot(data=Donald_1, statistic=theta, R=50, formula=Trump~.)
 par(mfrow=c(1,2))
 for (i in 1:6){
-plot(boot50_1, index=i, main=substitute(paste('boot_50: Coefficient ', i)))
-print(t.test(boot50_1$t[,i], mu=vergleich$coefficients[1]))
+hist(boot50_1$t[,i], main=paste("boot_50: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot50_1$t[,i], main = NULL)
+qqline(boot50_1$t[,i])
+print(t.test(boot50_1$t[,i], mu=vergleich$coefficients[i]))
 }
 boot100_1 <- boot(data=Donald_1, statistic=theta, R=100, formula=Trump~.)
-par(mfrow=c(1,4))
+par(mfrow=c(1,2))
 for (i in 1:6){
-plot(boot100_1, index=i, main= )
-print(t.test(boot100_1$t[,i], mu=vergleich$coefficients[1]))
+hist(boot100_1$t[,i], main=paste("boot_100: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot100_1$t[,i], main = NULL)
+qqline(boot100_1$t[,i])
+print(t.test(boot100_1$t[,i], mu=vergleich$coefficients[i]))
 }
 boot1000_1 <- boot(data=Donald_1, statistic=theta, R=1000, formula=Trump~.)
-par(mfrow=c(1,4))
+par(mfrow=c(1,2))
 for (i in 1:6){
-plot(boot1000_1, index=i)
-print(t.test(boot1000_1$t[,i], mu=vergleich$coefficients[1]))
+hist(boot1000_1$t[,i], main=paste("boot_1000: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot1000_1$t[,i], main = NULL)
+qqline(boot1000_1$t[,i])
+print(t.test(boot1000_1$t[,i], mu=vergleich$coefficients[i]))
 }
 boot10000_1 <- boot(data=Donald_1, statistic=theta, R=10000, formula=Trump~.)
-par(mfrow=c(1,4))
+par(mfrow=c(1,2))
 for (i in 1:6){
-plot(boot10000_1, index=i)
-print(t.test(boot10000_1$t[,i], mu=vergleich$coefficients[1]))
+hist(boot10000_1$t[,i], main=paste("boot_10000: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot10000_1$t[,i], main = NULL)
+qqline(boot10000_1$t[,i])
+print(t.test(boot10000_1$t[,i], mu=vergleich$coefficients[i]))
 }
 ```
+Hier untersuchen wir, ob wir durch das Bootstrappingverfahren auf das gleiche Ergebnis kommen wie die lineare Regression. Außerdem vergleichen wir die Verteilungen der Parameterschätzer für verschiedene Replikationsgrößen.
+Zu den Verteilungen lässt sich, wie bei Aufgabe 1, sagen, dass sich die Verteilungen mit mehr Replikationen immer mehr an die Normalverteilung annähern. Dies lässt sich an den Histogrammen, sowie den qqnorm-Plots ablesen. 
+Die t-Tests sind tendenziell insignifikant (p-Wert > 0.05), die Nullhypothesen können deshalb nicht verworfen werden. Es gibt vereinzelt Ausnahmen (Beispiel: Bei boot_100 Geschlecht). 
 
 ### b)
 ```{r}
 Konfi50 <- matrix(NA,6,2)
 rownames(Konfi50) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
-colnames(Konfi50) <- c("2,5","97,5")
+colnames(Konfi50) <- c("2,5%","97,5%")
 for(i in 1:6)
 {
     Konfi50[i,1] <- boot.ci(boot50_1, type="basic", index = i)$basic[4]
@@ -192,7 +215,7 @@ for(i in 1:6)
 }
 Konfi100 <- matrix(NA,6,2)
 rownames(Konfi100) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
-colnames(Konfi100) <- c("2,5","97,5")
+colnames(Konfi100) <- c("2,5%","97,5%")
 for(i in 1:6)
 {
     Konfi100[i,1] <- boot.ci(boot100_1, type="basic", index = i)$basic[4]
@@ -200,7 +223,7 @@ for(i in 1:6)
 }
 Konfi1000 <- matrix(NA,6,2)
 rownames(Konfi1000) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
-colnames(Konfi1000) <- c("2,5","97,5")
+colnames(Konfi1000) <- c("2,5%","97,5%")
 for(i in 1:6)
 {
     Konfi1000[i,1] <- boot.ci(boot1000_1, type="basic", index = i)$basic[4]
@@ -208,7 +231,7 @@ for(i in 1:6)
 }
 Konfi10000 <- matrix(NA,6,2)
 rownames(Konfi10000) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
-colnames(Konfi10000) <- c("2,5","97,5")
+colnames(Konfi10000) <- c("2,5%","97,5%")
 for(i in 1:6)
 {
     Konfi10000[i,1] <- boot.ci(boot10000_1, type="basic", index = i)$basic[4]
@@ -227,12 +250,15 @@ Konfi100
 Konfi1000
 Konfi10000
 ```
+Die Unterschiede der Konfidenzintervalle durch Bootstrapping mit dem Konfidenzintervall der linearen Regression sind verschwindend gering, deshalb ist eine Empfehlung schwierig. Wir würden uns für ein bootstrapping mit Replikationsgröße 10000 entscheiden, da hier die Unterschiede wohl am geringsten sind.
+
+Interessanterweise ist bei boot_100 das Konfidenzintervall für den Parameterschätzer der Kovariaten "Geschlecht" am unterschiedlichsten zum Konfidenzinterall der linearen Regression. Im Gegensatz zu den anderen Replikationsgrößen ist dieses Intervall nach unten verschoben. Dies schneidet sich mit der in Aufgabe 2a) aufgetretetenen Anomalie.
 
 ### d)
 ```{r}
 Konfi1000perc <- matrix(NA,6,2)
 rownames(Konfi1000perc) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
-colnames(Konfi1000perc) <- c("2,5","97,5")
+colnames(Konfi1000perc) <- c("2,5%","97,5%")
 for(i in 1:6)
 {
     Konfi1000perc[i,1] <- boot.ci(boot1000_1, type="perc", index = i)$perc[4]
@@ -240,7 +266,7 @@ for(i in 1:6)
 }
 Konfi1000bca <- matrix(NA,6,2)
 rownames(Konfi1000bca) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
-colnames(Konfi1000bca) <- c("2,5","97,5")
+colnames(Konfi1000bca) <- c("2,5%","97,5%")
 for(i in 1:6)
 {
     Konfi1000bca[i,1] <- boot.ci(boot1000_1, type="bca", index = i)$bca[4]
@@ -250,3 +276,5 @@ Konfi1000
 Konfi1000perc
 Konfi1000bca
 ```
+
+Wir sehen hier keine großen Unterschiede in den Konfidenzintervallen. 
