@@ -48,9 +48,11 @@ knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
 
 <!---** Hochschule Darmstadt | Studiengang Data Science | Sommersemester 2019 **--->
 
-```{r}
+```{r, echo=FALSE}
 set.seed(42)
 library(knitr)
+library(ggplot2)
+library(tidyr)
 ```
 
 # Monte-Carlo-Simulation
@@ -82,7 +84,7 @@ for (k in seq(2)) {
 }
 df_pi = data.frame(pimat)
 colnames(df_pi) = c("k", "z", "e")
-kable(df_pi, caption="Approximationen von Pi")
+kable(df_pi, align = "c")
 ```
 
 Um mit Chebyshev abschätzen zu können benötigen wir Erwartungswert und Varianz der Zufallsvariablen $z_i$.
@@ -131,4 +133,66 @@ Nach Chebyshev gilt nun für einen beliebigen Fehler $\varepsilon$ und $\sigma^2
 Nun gilt es zu bedenken, dass die Abschätzung zwar für alle $\varepsilon > 0$ gilt, aber nur für $n \varepsilon^2 > \sigma^2$ wirklich Sinn macht. Sprich es macht nur Sinn zu prüfen, wie hoch die Chance ist, dass man ein Vielfaches der Standardabweichung vom Mittelwert abweicht.
 Wie man an der Abschätzung erkennen kann, sinkt die Genauigkeit, dass wir um mehr als einen gegebenen Fehler abweichen mit zunehmenden $n$. Das heißt insbesondere, dass mit höheren $n$ der Fehler sinkt. Dies können wir anhand der Tabelle bestätigen.
 
-##
+## A2
+
+### a)
+
+```{r}
+simsnd = function(n) {
+  x = runif(n, -1.96, 1.96)
+  phi = dnorm(x)
+  out = 2 * 1.96 * mean(phi)
+  return(out)
+}
+```
+
+```{r}
+sndmat = matrix(NA, nrow = 8, ncol = 3)
+for (k in seq(6)) {
+  z = simsnd(10^k)
+  sndmat[k, 1] = k
+  sndmat[k, 2] = z
+  sndmat[k, 3] = round(abs(0.95 - z), 6)
+}
+df_snd = data.frame(sndmat)
+colnames(df_snd) = c("k", "z", "e")
+kable(df_snd, align="c")
+```
+
+### b)
+
+```{r}
+nexp = 10
+M = matrix(NA, nrow = nexp, ncol = 4)
+for (k in seq(5,7)) {
+  for (i in seq(nexp)) {
+    z = simsnd(10^k)
+    M[i, 1] = i
+    M[i,k - 3] = z
+  }
+}
+df = data.frame(M)
+colnames(df) = c("i", "5", "6", "7")
+ggdf = gather(df, "k", "P", seq(2,4))
+gg = ggplot(
+  data = ggdf,
+  mapping = aes(
+    x = i,
+    y = P,
+    group = k,
+    col = k
+  )
+)
+gg = gg + xlab("Iteration") + ylab("P")
+gg = gg + geom_point() 
+gg = gg + stat_smooth(method = "gam", formula = y ~ s(x, bs='cr'), se = FALSE)
+gg = gg + theme(
+  axis.title.x=element_blank(),
+  axis.text.x=element_blank(),
+  axis.ticks.x=element_blank()
+)
+gg
+```
+
+In der Abbildung können wir erkennen, dass für $k = 5 \implies n = 10^5$ es noch eine signifikante Streuung um den erwarteten Wert von $P = 0.95$ gibt. Um dies graphisch besser darzustellen haben wir einen kubischen Regressionspline durch die Punkte gezogen. Man erkennt für $k = 5$ deutliche Abweichungen, während für $k = \lbrace 6,7 \rbrace$ der Spline eher eine Gerade am erwarteten Wert ist.
+Erinnern wir uns an die Abschätzung mit Chebyshev aus Aufgabe 1, so sollten wir auch hier eine ähnliche Abschäzung erhalten (da analoges Vorgehen) und da die Wahrscheinlichkeit von Mittelwert abzuweichen mit dem Produkt aus Fehler und $n$ sinkt, braucht es schon ein hohes $n$, um möglichst kleine Fehler zu garantieren.
