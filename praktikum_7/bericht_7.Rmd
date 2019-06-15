@@ -1,0 +1,134 @@
+---
+output: pdf_document
+header-includes: 
+- \usepackage[utf8]{inputenc}
+- \usepackage[T1]{fontenc}
+- \usepackage[ngerman]{babel}
+- \usepackage{amsmath,amssymb,amsthm}
+- \usepackage{dsfont}
+- \usepackage{listings}
+- \usepackage{floatrow}
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- '\fancyhead[C,C]{Robin Baudisch, Merlin Kopfmann, Maximilian Neudert}'
+- \fancyhead[L]{}
+- \fancyhead[R]{}
+- \fancyfoot[C,C]{\thepage}
+- \renewcommand{\footrulewidth}{0.4pt}
+- \newcommand{\E}{\operatorname{E}}
+- \newcommand{\V}{\operatorname{V}}
+- \renewcommand{\Pr}{\operatorname{P}}
+---
+
+<style type="text/css">
+body{
+  font-size: 12px;
+}
+h1 {
+  font-size: 18px;
+}
+h1 {
+  font-size: 14px;
+}
+h1 {
+  font-size: 12px;
+}
+</style>
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
+                      collapse=TRUE,     # collapse by default
+                      echo=TRUE,         # echo code by default
+                      comment = "#>",    # change comment character
+                      fig.width = 10,     # set figure width
+                      out.width = "100%", # set width of displayed images
+                      warning=TRUE,      # show R warnings
+                      message=FALSE)     # show R messages
+```
+
+<!---** Hochschule Darmstadt | Studiengang Data Science | Sommersemester 2019 **--->
+
+```{r}
+set.seed(42)
+library(knitr)
+```
+
+# Monte-Carlo-Simulation
+
+## Aufgabe 1
+
+```{r}
+zi = function(xi, yi) {
+  out = 4 * ifelse(xi^2 + yi^2 <= 1, 1, 0)
+  return(out)
+}
+
+simpi = function(n) {
+  xi = runif(n, -1, 1)
+  yi = runif(n, -1, 1)
+  z = zi(xi, yi)
+  out = mean(z)
+  return(out)
+}
+```
+
+```{r}
+pimat = matrix(NA, nrow = 8, ncol = 3)
+for (k in seq(2)) {
+  z = simpi(10^k)
+  pimat[k, 1] = k
+  pimat[k, 2] = z
+  pimat[k, 3] = round(abs(pi - z), 6)
+}
+df_pi = data.frame(pimat)
+colnames(df_pi) = c("k", "z", "e")
+kable(df_pi, caption="Approximationen von Pi")
+```
+
+Um mit Chebyshev abschätzen zu können benötigen wir Erwartungswert und Varianz der Zufallsvariablen $z_i$.
+Der Erwartungswert sollte mit $\pi$ übereinstimmen. Wir rechnen nach. Sei dazu $z_1$ die Approximation von $\pi$ mittels des Einheitskreises im Einheitsquadrat eingeschränkt auf den 1. Quadranten.
+
+\begin{align}
+\E(z_i)
+& = \E(4 z_1)
+= 4 \E(z_i)
+= 4 \int_0^1 \sqrt{1 - x^2}\ dx = 4 \frac \pi 4 = \pi
+\end{align}
+
+\begin{align}
+\V(z_i)
+& = \V(4 z_1)
+= 16 \E(z_i)\\
+& = 16 \int_0^1 \sqrt{1 - x^2}^2\ dx - 16 \left(  \int_0^1 \sqrt{1 - x^2}\ dx\right)^2\\
+& = 16 \int_0^1 1-x^2\ dx - 16 \frac{\pi^2}{16}
+= 16 \left[ x - \frac 1 3 x^3 \right]_0^1 - \pi^2\\
+& = \frac{32}{3} - \pi^2 \approx 0.797
+\end{align}
+
+Damit erhalten wir dann für $\bar z$:
+
+\begin{align}
+& \E(\bar z)
+= \E\left(\frac 1 n \sum_{i=1}^n z_i \right)
+= \frac 1 n n \E(z_i) = \E(z_i) = \pi\\
+& \V(\bar z)
+= \V \left(\frac 1 n \sum_{i=1}^n z_i \right)
+= \frac{1}{n^2} \left(\sum_{i=1}^n z_i \right)
+= \frac{n}{n^2} \V(z_i)
+= \frac{1}{n} \V(z_i) \approx \frac{0.797}{n}
+\end{align}
+
+Nach Chebyshev gilt nun für einen beliebigen Fehler $\varepsilon$ und $\sigma^2 = \V(z_i)$:
+
+\begin{align}
+& \Pr\left( \vert \bar z - \pi \vert \geq \varepsilon \right)
+\leq \frac{\V(\bar z)}{\varepsilon^2} \\
+\implies
+& \Pr\left( \vert \bar z(n) - \pi \vert \geq \varepsilon \right)
+\leq \frac{\sigma^2}{n^2 \varepsilon^2} = \frac{\sigma}{n \varepsilon}
+\end{align}
+
+Nun gilt es zu bedenken, dass die Abschätzung zwar für alle $\varepsilon > 0$ gilt, aber nur für $n \varepsilon^2 > \sigma^2$ wirklich Sinn macht. Sprich es macht nur Sinn zu prüfen, wie hoch die Chance ist, dass man ein Vielfaches der Standardabweichung vom Mittelwert abweicht.
+Wie man an der Abschätzung erkennen kann, sinkt die Genauigkeit, dass wir um mehr als einen gegebenen Fehler abweichen mit zunehmenden $n$. Das heißt insbesondere, dass mit höheren $n$ der Fehler sinkt. Dies können wir anhand der Tabelle bestätigen.
+
+##
