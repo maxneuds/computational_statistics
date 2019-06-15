@@ -152,7 +152,7 @@ for (lambda in lambdas){
                              lambda = lambda, alpha = 0)
     cat('\n')
     print(lambda) 
-    cat(mean(y.true-y.pred)^2)
+    cat(mean((y.true-y.pred)^2))
     cat('\n')
 }
 ```
@@ -173,7 +173,7 @@ for (lambda in lambdas){
     y.true <- test$lpsa
     y.pred <- predict.glmnet(ridgereg, newx = as.matrix(within(test, rm(lpsa))), 
                                        lambda = lambda, alpha = 0)
-    mse <- append(mse, mean(y.true-y.pred)^2)
+    mse <- append(mse, mean((y.true-y.pred)^2))
 }
 
 lambda_mse <- NULL
@@ -187,7 +187,11 @@ ggplot(lambda_mse, aes(x=lambdas, y=mse)) +
 opt_lambda_test <- lambda_mse$lambdas[lambda_mse$mse == min(lambda_mse$mse)]
 ```
 
-Der optimale Schätzer für $\lambda$ des kompletten Datensatzes beträgt laut cv.glmnet `r opt_lambda`. Dieser liegt nicht weit vom Lambda-Wert aus d) mit dem niedrigsten Test-MSE (0.09). Auch der Plot des Test-MSE in Abhängigkeit von verschiedenen $\lambda$-Werten spricht für ein optimales Lambdas von ~0.1. (Optimales Lambda (out-of-sample) = `r opt_lambda_test`)
+Der optimale Schätzer für $\lambda$ des kompletten Datensatzes beträgt laut cv.glmnet `r opt_lambda`. Dieser liegt nicht weit vom Lambda-Wert aus d) mit dem niedrigsten Test-MSE (0.09). Der Plot des Test-MSE in Abhängigkeit von verschiedenen $\lambda$-Werten spricht allerdings für ein optimales Lambdas von `r opt_lambda_test`. Diese Diskrepanz lässt sich durch zwei Faktoren erklären:
+
+1. cv.glmnet führt standardmäßig eine 10-fache Kreuzvalidierung durch, um das beste $\lambda$ zu finden. Das optimale $\lambda$ laut Test-MSE wird hier nicht über Kreuzvalidierung ermittelt.
+
+2. Wir ermitteln den Test-MSE "out-of-sample", das heißt die Daten, mit denen wir die Ridge-Regression fitten, sind unterschiedlich. 
 
 
 ### f)
@@ -254,12 +258,12 @@ for (lambda in lambdas){
                              lambda = lambda, alpha = 1)
     cat('\n')
     print(lambda) 
-    cat(mean(y.true-y.pred)^2)
+    cat(mean((y.true-y.pred)^2))
     cat('\n')
 }
 ```
 
-Hier scheint der "Sweet Spot" für $\lambda$ zwischen 0.002 und 1 zu liegen.
+Hier scheint der "Sweet Spot" für $\lambda$ um 0.002 zu liegen.
 
 
 ### d)
@@ -276,7 +280,7 @@ for (lambda in lambdas){
     y.true <- test$lpsa
     y.pred <- predict.glmnet(ridgereg, newx = as.matrix(within(test, rm(lpsa))), 
                                        lambda = lambda, alpha = 1)
-    mse <- append(mse, mean(y.true-y.pred)^2)
+    mse <- append(mse, mean((y.true-y.pred)^2))
 }
 
 lambda_mse <- NULL
@@ -290,7 +294,7 @@ ggplot(lambda_mse, aes(x=lambdas, y=mse)) +
 opt_lambda_test <- lambda_mse$lambdas[lambda_mse$mse == min(lambda_mse$mse)]
 ```
 
-Hier liegt der optimale Wert für $\lambda$ für den kompletten Datensatz bei `r opt_lambda`. Dieser Wert liegt wieder sehr nahe am ermittelten Optimum aus c). Plottet man den Test-MSE (out-of-sample) in Abhängigkeit verschiedener $\lambda$-Werte, kommt man allerdings auf ein ein optimalen $\lambda$-Wert von `r opt_lambda_test`.
+Hier liegt der optimale Wert für $\lambda$ für den kompletten Datensatz bei `r opt_lambda`. Dieser Wert liegt wieder sehr nahe am ermittelten Optimum aus c). Plottet man den Test-MSE (out-of-sample) in Abhängigkeit verschiedener $\lambda$-Werte, kommt man allerdings auf ein ein optimalen $\lambda$-Wert von `r opt_lambda_test`. Dies liegt wieder an den gleichen Gründen, wie in Aufgabe 1 e).
 
 ### e)
 ```{r}
@@ -303,4 +307,4 @@ coeff_df$lasso_coeff <- lasso_coeff
 coeff_df %>% select(2, 5)
 ```
 
-Wie bereits in Aufgabe 1 ist beim Lasso-Verfahren gut zu erkennen, dass die Koeffizienten im Vergleich zur linearen Regression aus Aufgabe 1 a) "geschrumpft" werden und näher an der 0 liegen. 
+Wie bereits in Aufgabe 1 ist beim Lasso-Verfahren gut zu erkennen, dass die Koeffizienten im Vergleich zur linearen Regression aus Aufgabe 1 a) "geschrumpft" werden und näher an der 0 liegen. Anders als bei der Ridge-Regression sind beim Lasso-Verfahren zwei $\beta$-Schätzer tatsächlich 0 geworden (lcp und gleason).
