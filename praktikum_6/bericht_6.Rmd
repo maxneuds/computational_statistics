@@ -118,6 +118,8 @@ qqplot(invexp,exp)
 qqplot(invpois,pois)
 ```
 
+Es zeigt sich dass sich die Inversionsverfahren bei n=10000 relativ gut den zugrundeliegenden Verteilungen annähern.
+
 ###b)
 
 ```{r}
@@ -128,10 +130,12 @@ bmnorm = cos(2*pi*u)*sqrt(-log(v))
 norm <- rnorm(10000)
 
 par(mfrow=c(1,2))
-hist(bmnorm)
-hist(norm)
+hist(bmnorm,xlim=c(-4,4))
+hist(norm, xlim=c(-4,4))
 qqplot(bmnorm,norm)
 ```
+
+Es zeigt sich eine Normalverteilung der transformierten gleichverteilten Zufallszahlen durch die die Transformationsformel. Da die Standardabweichung der durch die Box-Müller Methode erzeugten Zufallszahlen `r sd(bmnorm)` ist, ist das Histogramm im Vergleich zu den von R erzeugten normalverteilten Zufallszahlen "schmaler". Da rnorm standardmäßig standardnormalverteilte Zufallszahlen erzeugt, sieht man hier deutliche Unterschiede.
 
 ## A 2
 ###a)
@@ -195,6 +199,26 @@ superduper <- runif(10000)
 
 ###e)
 ```{r}
+ro1 <- randomorg[-length(randomorg)]
+ro2 <- randomorg[-1]
+plot(ro1,ro2, main="RandomOrg")
+
+ms1 <- midsqr[-length(midsqr)]
+ms2 <- midsqr[-1]
+plot(ms1,ms2, main="Midsquare")
+
+bz1 <- baumannikov_zwirbler[-length(baumannikov_zwirbler)]
+bz2 <- baumannikov_zwirbler[-1]
+plot(bz1, bz2, main="Baumannikov-Zwirbler")
+
+me1 <- mersenne[-length(mersenne)]
+me2 <- mersenne[-1]
+plot(me1,me2, main="Mersenne")
+
+sd1 <- superduper[-length(superduper)]
+sd2 <- superduper[-1]
+plot(sd1,sd2, main="SuperDuper")
+
 par(mfrow=c(3,2))
 hist(randomorg)
 hist(midsqr)
@@ -214,3 +238,5 @@ qqplot(baumannikov_zwirbler,mersenne)
 qqplot(baumannikov_zwirbler,superduper)
 qqplot(mersenne,superduper)
 ```
+
+Die Scatterplots der ZweierTupel zeigen eine zufällige Verteilung der Zufallszahlen bis auf die Methode des Mittquadrat Verfahrens von Neumann. Bei diesem zeigt sich eine deutliche Überverteilung der Zahlen bei (0,0). Die Histogramme bestätigen dieses Bild. Auch die QQPlots zeigen die Schwäche des Mittquadrat Verfahrens von Neumann im Vergleich zu den anderen Zufallsgeneratoren.
