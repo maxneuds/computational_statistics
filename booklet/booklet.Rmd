@@ -59,13 +59,25 @@ knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
 
 <!---** Hochschule Darmstadt | Studiengang Data Science | Sommersemester 2019 **--->
 
+\setlength{\parindent}{0 pt}
+\setlength{\parskip}{6 pt}
+\setlength{\topsep}{6 pt}
+\pagestyle{scrheadings}
+\automark[section]{section}
+\ihead{}
+\chead{\normalfont \headmark}
+\ohead{}
+\ifoot{}
+\cfoot{\normalfont \pagemark}
+\ofoot{}
+
 \begin{titlepage}
 	\begin{center}
 		\null\vfill
 		{\Huge Computational Statistics}\vfill
-		{\fontsize{16 pt}{0 mm} {\fontfamily{pzc}\selectfont Robin Baudisch}}\\
-		{\fontsize{16 pt}{0 mm} {\fontfamily{pzc}\selectfont Merlin Kopfmann}}\\
-		{\fontsize{16 pt}{0 mm} {\fontfamily{pzc}\selectfont Maximilian Neudert}}\\[12pt]
+		{\fontsize{17 pt}{0 mm} {\fontfamily{pzc}\selectfont Robin Baudisch}}\\[7pt]
+		{\fontsize{17 pt}{0 mm} {\fontfamily{pzc}\selectfont Merlin Kopfmann}}\\[7pt]
+		{\fontsize{17 pt}{0 mm} {\fontfamily{pzc}\selectfont Maximilian Neudert}}\\[12pt]
 		{\fontsize{12 pt}{0 mm} {\fontfamily{pzc}\selectfont\today}}
 	\end{center}
 \end{titlepage}
@@ -74,6 +86,8 @@ knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
 \thispagestyle{empty}
 \tableofcontents
 \cleardoublepage
+
+# Einführung
 
 Alle Aufgaben werden mit folgendem Seed bearbeitet:
 
@@ -101,8 +115,6 @@ usepackage(boot)
 ```
 
 \cleardoublepage
-
-# Einführung
 
 ## A1
 
@@ -144,7 +156,7 @@ In der Ausgabe sehen wir die Intervallgrenzen für das 95\%-Konfidenzintervall.
 
 ## A4
 
-```{r, include=TRUE,  message=FALSE}
+```{r}
 vif_fit <- vif(mod = fit)
 vif_fit
 ```
@@ -153,11 +165,12 @@ Die VIF-Werte liegen alle deutlich unter 5(10), es liegen also keine Hinweise f�
 
 ## A5
 
-```{r, include=TRUE,  message=FALSE, fig.height=8}
+```{r, fig.height = 8}
 par(mfrow = c(2, 2)) 
 plot(fit)
 ```
-```{r}
+
+```{r, fig.height = 6}
 data$predicted <- predict(fit)
 data$residuals <- residuals(fit)
 
@@ -177,7 +190,7 @@ Die Residuenanalyse ergibt, dass die Residuen näherungsweise normalverteilt sin
 Zudem wurden die Ausprägungen der (nicht-binären) unabhängigen Parameter den Ausprägungen der abhängigen Variablen durch Scatterplots gegenübergestellt.
 Lediglich der Parameter "Fremdenfeindlich" weist einen klar erkennbaren linearen Zusammenhang zur abhängigen Variabel auf. Dies bestätigt das Ergebnis aus 2.
 
-```{r}
+```{r, fig.height=6}
 avPlot(fit, "Fremdenfeindlich")
 avPlot(fit, "Alter")
 avPlot(fit, "Minderheit")
@@ -260,7 +273,6 @@ for (i in 1:nrow(Donald_1)){
   pred <- predict.lm(lou, Donald_1[i,])
   mse[i] <- mean((Donald_1[i,]$Trump - pred) ^ 2)
 }
-
 mse <- sum(mse)/nrow(Donald_1)
 kable(mse, format = 'pandoc', align = 'c', digits = 3)
 ```
@@ -276,7 +288,6 @@ model <- glm(
 )
 
 cv_model <- cv.glm(Donald_1, model, K = nrow(Donald_1))
-
 mse1 <- cv_model$delta
 kable(mse1, format = 'pandoc', align = 'c', digits = 3)
 ```
@@ -285,7 +296,7 @@ Die Implementierung des "Leave-one-out cross-validation"-Verfahrens durch cv.glm
 
 ## A3
 
-```{r}
+```{r, fig.height = 6}
 mse <- matrix(NA, nrow = 20, ncol = 3)
 for (k in c(5,10)){
   for (i in 1:10){
