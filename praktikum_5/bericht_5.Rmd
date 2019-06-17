@@ -1,14 +1,39 @@
-
 ---
-output:
-  pdf_document: default
-  html_document: default
+output: pdf_document
 header-includes: 
-    - \usepackage{amsthm}
-    - \usepackage{xcolor}
-documentclass: article
-<!---output: beamer_presentation--->
+- \usepackage[utf8]{inputenc}
+- \usepackage[T1]{fontenc}
+- \usepackage[ngerman]{babel}
+- \usepackage{amsmath,amssymb,amsthm}
+- \usepackage{dsfont}
+- \usepackage{listings}
+- \usepackage{floatrow}
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- '\fancyhead[C,C]{Robin Baudisch, Merlin Kopfmann, Maximilian Neudert}'
+- \fancyhead[L]{}
+- \fancyhead[R]{}
+- \fancyfoot[C,C]{\thepage}
+- \renewcommand{\footrulewidth}{0.4pt}
+- \newcommand{\E}{\operatorname{E}}
+- \newcommand{\V}{\operatorname{V}}
+- \renewcommand{\Pr}{\operatorname{P}}
 ---
+
+<style type="text/css">
+body{
+  font-size: 12px;
+}
+h1 {
+  font-size: 18px;
+}
+h1 {
+  font-size: 14px;
+}
+h1 {
+  font-size: 12px;
+}
+</style>
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
@@ -19,86 +44,151 @@ knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
                       out.width = "100%", # set width of displayed images
                       warning=TRUE,      # show R warnings
                       message=FALSE)     # show R messages
+```
 
-packageTest<- function(x)  {
+<!---** Hochschule Darmstadt | Studiengang Data Science | Sommersemester 2019 **--->
+
+```{r, echo=FALSE}
+set.seed(42)
+
+usepackage = function(x)  {
     if (!require(x,character.only = TRUE))  {
       install.packages(x,dep=TRUE)
       if(!require(x,character.only = TRUE)) stop("Package not found")
     }
 }
 
-options(warn=-1)
+library(ggplot2)
+library(knitr)
+library(tidyr)
+
+usepackage('ElemStatLearn')
+usepackage('pls')
 ```
 
+# PCA/PLS Regression
 
-<!--- Solution Region --->
-<style>
-#solution {
-  background-color: #8FBC8F;
-  border-style: solid;
-  border-color: blue;
-  margin-left: 20px;
-  margin-bottom: 15px;
-  padding: 5px;
-}
-</style>
+## Aufgabe 1
 
-
-
-<!---**Sommersemester 2019 |Studiengang Data Science | Hochschule Darmstadt **--->
-
-
-
-
-\theoremstyle{break}
-\newtheorem{auf}{Aufgabe}
-
-\newcommand{\R}{{\sffamily R} }
-
-\begin{centering}
-%\vspace{-2 cm}
-\Huge
-{\bf Uebung 5}\\
-\Large
-Computational Statistics\\
-\normalsize
-Sommersemester 2019\\
-April 15, 2019\\
-J. Groos (FBMN, h\_da)\\
-\end{centering}
-
-
-\hrulefill
-
-**Name:**
-
-\hrulefill
+### a)
 
 ```{r}
-set.seed(42)
+data = subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45))
+cmat = cor(data)
+kable(cmat, align = 'c', digits = 3)
 ```
 
-## A 1 
-###a)
-```{r}
-packageTest('ElemStatLearn')
-data <- subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45))
-cor(data)
-```
+Man erkennt, dass "pgg45" und "lcavol" am stärksten mit anderen Variablen korrelieren. Insbesondere "pgg45" und "gleason" weisen eine hoh positive Korrelation von $0.752$ auf. 
+Wenn wir Variablen mit hoher Korrelation als Prädiktor in das Modell hinzufügen, dann werden die Regressionskoeffizienten davon stark beeinflusst. Diese Multikollinearität ist insofern schlecht, da die Prognose dadurch in Richtungen gezerrt wird, die vom eigentlichen Ergebnis abweicht. Um dies zu vermeiden gibt es neben Variablen aus dem Modell nehmen verschiedene Verfahren. In Übung 4 nutze man dazu Ridge/Lasso Regression. Hier nun andere Methoden.
 
-###b)
+### b)
+
 ```{r}
-packageTest('pls')
-data <- subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45,lpsa))
-pcr <- pcr(lpsa~lcavol+lweight+age+lbph+svi+lcp+gleason+pgg45,data=data,validation = "CV",scale = TRUE)
+data = subset(
+  prostate, 
+  select = c(lcavol, lweight, age, lbph, svi, lcp, gleason, pgg45, lpsa)
+)
+pcr = pcr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = data,
+  validation = "CV",
+  scale = TRUE
+)
 summary(pcr)
 ```
-###c)
-```{r}
 
+Wir sehen hier, dass wir mit 4 Hauptkomponenten schon $82.71 \%$ der Varianz erklären können. Danach steigt die zunahme der erklärten Varianz nur noch langsam. Bis zu 6 Hauptkomponenten könnte man noch sinnvoll in das Modell mit aufnehmen. Mehr würde dem eigentlich Sinn widersprechen die Anzahl an Prädiktoren zu senken, um Multikolinearität zu reduzieren.
+
+### c)
+
+In der Summary bekommen wir zu den Cross-Validations den RMSEP (Root Mean Squared Error) mit ausgegeben. Wir erhalten den kleinsten Fehler mit $0.7583$ für 8 Hauptkomponenten. Dies ist verständlich, da mit allen Hauptkomponenten auch 100\% der Varianz erklärt werden. Dies heißt aber nicht, dass das Modell dann auf einem anderen (unter Umständten stark unterschiedlichen) Datensatz immer noch die besten Ergebnisse liefert.
+
+
+### d)
+
+```{r}
+validationplot(pcr, val.type = "MSEP")
 ```
 
-###d)
+Sinnvoll ist es eine Anzahl an Hauptkomponenten zu wählen, wo sich nicht mehr viel ändert. Dies kann man anhand eines Plot mittels Elbow-Methode erreichen. Sprich wir schauen, wo auf der Kurve etwa der Ellbogen liegt und nehmen dann den Wert an dieser stelle. Schauen wir uns den Plot an, so erscheint es sinnvoll sich für $3$ Hauptkomponenten zu entscheiden.
+
+\cleardoublepage
+
+### e)
+
 ```{r}
-validationplot(pcr)
+train = prostate[prostate$train == TRUE, ]
+test = prostate[prostate$train == FALSE, ]
+pcr = pcr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = train,
+  scale = TRUE
+)
+
+y.true = test$lpsa
+y.pred = predict(pcr, test, ncomd = 3)
+
+MSE = mean((y.true - y.pred)^2)
+MSE = round(MSE, 3)
+MSE
 ```
+
+Wir erhalten einen MSE von $`r MSE`$. 
+Vergleichen wir den Wert mit den Ergebnissen aus der letzten Übung, so stellen wir fest, dass der MSE etwa auf gleichem Niveau ist, wie der von Ridge/Lasso-Regression. Mittels Parametertuning lässt sich bei den anderen Regressionsverfahren ein besseres Ergebnis erreichen, aber dafür ist dafür auch in deutlich höhrer Aufwand nötig. Die Ergebnisse der PCA sind für den gegebenen Aufwand sehr gut.
+
+\cleardoublepage
+
+## A2
+
+### a)
+
+```{r}
+data = subset(
+  prostate, 
+  select = c(lcavol, lweight, age, lbph, svi, lcp, gleason, pgg45, lpsa)
+)
+plsr = plsr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = data,
+  validation = "CV",
+  scale = TRUE
+)
+summary(plsr)
+```
+
+### b)
+
+Hier sinkt der Fehler schneller im Vergleich zur PCA. Der geringste Fehler ist $0.7411$ für 3 Komponenten.
+
+
+### c)
+
+```{r}
+validationplot(plsr, val.type = "MSEP")
+```
+
+Nach der Elbow-Methode bieten sich hier 2 Komponenten an.
+
+### d)
+
+```{r}
+train = prostate[prostate$train == TRUE, ]
+test = prostate[prostate$train == FALSE, ]
+plsr = plsr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = train,
+  scale = TRUE
+)
+
+y.true = test$lpsa
+y.pred = predict(plsr, test, ncomd = 2)
+
+MSE = mean((y.true - y.pred)^2)
+MSE = round(MSE, 3)
+MSE
+```
+
+Wir erhalten einen MSE von $`r MSE`$.
+Dieser Wert ist besser als das Ergebnis von Aufgabe 1 und näher an den Ridge/Lasso-Regression Werten aus der vorherigen Übung aber nicht besser als diese. Das macht auch Sinn, da PLSR vom Aufwand her zwischen PSA und Ridge/Lasso-Regression liegt.
+
+
