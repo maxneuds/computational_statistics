@@ -76,7 +76,7 @@ simpi = function(n) {
 
 ```{r}
 pimat = matrix(NA, nrow = 8, ncol = 3)
-for (k in seq(2)) {
+for (k in seq(8)) {
   z = simpi(10^k)
   pimat[k, 1] = k
   pimat[k, 2] = z
@@ -152,7 +152,7 @@ simsnd = function(n) {
 
 ```{r}
 sndmat = matrix(NA, nrow = 8, ncol = 3)
-for (k in seq(6)) {
+for (k in seq(8)) {
   z = simsnd(10^k)
   sndmat[k, 1] = k
   sndmat[k, 2] = z
@@ -290,7 +290,7 @@ batman = function(n) {
 ```
 
 ```{r}
-n = 10^3
+n = 10^5
 df = batman(n)
 ```
 

@@ -87,9 +87,9 @@ knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
 \tableofcontents
 \cleardoublepage
 
-# Einführung
+\section*{Einführung}
 
-Alle Aufgaben werden mit folgendem Seed bearbeitet:
+Aufgaben werden mit folgendem Seed bearbeitet:
 
 ```{r}
 set.seed(42)
@@ -105,6 +105,7 @@ usepackage = function(name) {
     if(!require(x,character.only = TRUE)) stop("Package not found")
   }
 }
+usepackage(komadown)
 usepackage(knitr)
 usepackage(ggplot2)
 usepackage(tidyr)
@@ -112,9 +113,18 @@ usepackage(lm.beta)
 usepackage(car)
 usepackage(magrittr)
 usepackage(boot)
+usepackage(tidyverse)
+usepackage(reshape)
+usepackage(grid)
+usepackage(gridExtra)
+usepackage(glmnet)
+usepackage(ElemStatLearn)
+usepackage(pls)
 ```
 
 \cleardoublepage
+
+# Lineare Regression
 
 ## A1
 
@@ -200,6 +210,8 @@ avPlot(fit, "Geschlecht")
 
 An den Added-Variable Plot wird nochmals deutlich, dass "Fremdenfeindlich", "IQ" und "Alter" einen linearen Trend aufweisen. Die beiden binären Variablen "Minderheit" und "Geschlecht" kann man nicht linear erklären.
 
+\cleardoublepage
+
 ## A6
 
 ```{r, include=TRUE, message=FALSE}
@@ -225,7 +237,7 @@ Das Modell prognostiziert uns unterschiedliche Ergebnisse. Man erkennt klar, das
 
 \cleardoublepage
 
-# Lineare Regression
+# Cross Validation
 
 ## A1
 
@@ -327,4 +339,1048 @@ Untereinander schwanken die MSE-Werte zufällig. Als Trend ist zu beobachten, da
 
 \cleardoublepage
 
-# Cross Validation
+# Bootstap
+
+## A1
+
+\subsubsection*{a}
+
+```{r}
+means50 = matrix(NA, nrow = 50, ncol = 1)
+for (i in 1:50){
+  summe = runif(500,0,1)
+  means50[i,] = mean(summe)
+}
+means1000 = matrix(NA, nrow = 1000, ncol = 1)
+for (i in 1:1000){
+  summe = runif(500,0,1)
+  means1000[i,] = mean(summe)
+}
+head(means1000)
+```
+
+\subsubsection*{b) \& c)}
+
+```{r}
+bootdata <- runif(500,0,1)
+bootfunc <- function(data,i) {
+  d <- data[i]
+  return(mean(d))
+}
+boot50 <- boot(bootdata, bootfunc, R = 50)
+boot50 <- boot50$t
+boot1000 <- boot(bootdata, bootfunc, R = 1000)
+boot1000 <- boot1000$t
+hist(boot50)
+hist(boot1000)
+hist(means50)
+hist(means1000)
+boxplot(boot50, main='Boxplot of Bootstrap (R = 50)')
+boxplot(boot1000, main='Boxplot of Bootstrap (R = 1000)')
+boxplot(means50, main='Boxplot of n=50')
+boxplot(means1000, main='Boxplot of n=1000')
+```
+
+```{r, fig.height=8}
+par(mfrow=c(2,2))
+qqnorm(boot50, main='QQPlot Bootstrap (R = 50)')
+qqline(boot50)
+qqnorm(boot1000, main='QQPlot Bootstrap (R = 1000)')
+qqline(boot1000)
+qqnorm(means50, main='QQPlot n=50')
+qqline(means50)
+qqnorm(means1000, main='QQPlot n=1000')
+qqline(means1000)
+shapiro.test(means50)
+shapiro.test(means1000)
+shapiro.test(boot50)
+shapiro.test(boot1000)
+```
+Laut Shapiro-Wilks-Test kann für keine der vier Stichproben die Nullhypothese (Stichprobe ist normalverteilt) verworfen werden, auch wenn die Histogramme von boot50 und means50 nicht nach Normalverteilung aussehen.
+
+
+\subsubsection*{d)}
+
+```{r}
+levene50 <- c(means50,boot50)
+
+levene1000 <- c(means1000,boot1000)
+
+levgroup50 <- as.factor(c(rep(1, length(means50)), rep(2, length(boot50))))
+
+
+levgroup1000 <- as.factor(c(rep(1, length(means1000)), rep(2, length(boot1000))))
+leveneTest(levene50, levgroup50)
+
+leveneTest(levene1000, levgroup1000)
+
+t.test(means50, boot50, var.equal = TRUE)
+
+t.test(means1000, boot1000, var.equal = TRUE)
+```
+Um t-Tests durchführen zu können, müssen die Gruppen erst auf Varianzhomogenität geprüft werden. Diese wird mit dem Levene-Test geprüft. Laut diesem ist die Varianzhomogenität sowohl für $\operatorname{Means}_{sim50}$ und $\operatorname{Means}_{boot50}$ und $\operatorname{Means}_{sim1000}$ und $\operatorname{Means}_{boot1000}$ gegeben. 
+
+Der t-Test zur Überprüfung der Mittelwerte von $\operatorname{Means}_{sim50}$ und $\operatorname{Means}_{boot50}$ lieferte ein insignifikantes Ergebnis. Aus diesem Grund kann die Nullhypothese ("Differenz der Mittelwerte gleich 0.") nicht verworfen werden. 
+
+Für die Mittelwerte von $\operatorname{Means}_{sim1000}$ und $\operatorname{Means}_{boot1000}$ kann die Nullhypothese mit einem Siginifkanzniveau von 95% verworfen werden.
+
+## A2
+
+\subsubsection*{a)}
+
+```{r}
+load("res/Donald.RData")
+vergleich <- lm(data = Donald_1, Trump ~ Geschlecht + Alter + Minderheit + Fremdenfeindlich + IQ)
+theta <- function(formula, data, indices){
+  d <- data[indices,]
+  fit <- lm(formula, data = d)
+  return(coef(fit))
+}
+
+coef_names <- names(vergleich$coefficients)
+
+boot50_1 <- boot(data=Donald_1, statistic=theta, R=50, formula=Trump~.)
+par(mfrow=c(1,2))
+for (i in 1:6){
+hist(boot50_1$t[,i], main=paste("boot_50: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot50_1$t[,i], main = NULL)
+qqline(boot50_1$t[,i])
+print(t.test(boot50_1$t[,i], mu=vergleich$coefficients[i]))
+}
+boot100_1 <- boot(data=Donald_1, statistic=theta, R=100, formula=Trump~.)
+par(mfrow=c(1,2))
+for (i in 1:6){
+hist(boot100_1$t[,i], main=paste("boot_100: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot100_1$t[,i], main = NULL)
+qqline(boot100_1$t[,i])
+print(t.test(boot100_1$t[,i], mu=vergleich$coefficients[i]))
+}
+boot1000_1 <- boot(data=Donald_1, statistic=theta, R=1000, formula=Trump~.)
+par(mfrow=c(1,2))
+for (i in 1:6){
+hist(boot1000_1$t[,i], main=paste("boot_1000: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot1000_1$t[,i], main = NULL)
+qqline(boot1000_1$t[,i])
+print(t.test(boot1000_1$t[,i], mu=vergleich$coefficients[i]))
+}
+boot10000_1 <- boot(data=Donald_1, statistic=theta, R=10000, formula=Trump~.)
+par(mfrow=c(1,2))
+for (i in 1:6){
+hist(boot10000_1$t[,i], main=paste("boot_10000: Coefficient", coef_names[i]), xlab = coef_names[i])
+qqnorm(boot10000_1$t[,i], main = NULL)
+qqline(boot10000_1$t[,i])
+print(t.test(boot10000_1$t[,i], mu=vergleich$coefficients[i]))
+}
+```
+
+Hier untersuchen wir, ob wir durch das Bootstrappingverfahren auf das gleiche Ergebnis kommen wie die lineare Regression. Außerdem vergleichen wir die Verteilungen der Parameterschätzer für verschiedene Replikationsgrößen.
+Zu den Verteilungen lässt sich, wie bei Aufgabe 1, sagen, dass sich die Verteilungen mit mehr Replikationen immer mehr an die Normalverteilung annähern. Dies lässt sich an den Histogrammen, sowie den qqnorm-Plots ablesen. 
+Die t-Tests sind tendenziell insignifikant (p-Wert > 0.05), die Nullhypothesen können deshalb nicht verworfen werden. Es gibt vereinzelt Ausnahmen (Beispiel: Bei boot_100 Geschlecht). 
+
+\subsubsection*{b)}
+
+```{r}
+Konfi50 <- matrix(NA,6,2)
+rownames(Konfi50) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
+colnames(Konfi50) <- c("2,5%","97,5%")
+for(i in 1:6)
+{
+    Konfi50[i,1] <- boot.ci(boot50_1, type="basic", index = i)$basic[4]
+    Konfi50[i,2] <- boot.ci(boot50_1, type="basic", index = i)$basic[5]
+}
+Konfi100 <- matrix(NA,6,2)
+rownames(Konfi100) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
+colnames(Konfi100) <- c("2,5%","97,5%")
+for(i in 1:6)
+{
+    Konfi100[i,1] <- boot.ci(boot100_1, type="basic", index = i)$basic[4]
+    Konfi100[i,2] <- boot.ci(boot100_1, type="basic", index = i)$basic[5]
+}
+Konfi1000 <- matrix(NA,6,2)
+rownames(Konfi1000) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
+colnames(Konfi1000) <- c("2,5%","97,5%")
+for(i in 1:6)
+{
+    Konfi1000[i,1] <- boot.ci(boot1000_1, type="basic", index = i)$basic[4]
+    Konfi1000[i,2] <- boot.ci(boot1000_1, type="basic", index = i)$basic[5]
+}
+Konfi10000 <- matrix(NA,6,2)
+rownames(Konfi10000) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
+colnames(Konfi10000) <- c("2,5%","97,5%")
+for(i in 1:6)
+{
+    Konfi10000[i,1] <- boot.ci(boot10000_1, type="basic", index = i)$basic[4]
+    Konfi10000[i,2] <- boot.ci(boot10000_1, type="basic", index = i)$basic[5]
+}
+Konfi50
+Konfi100
+Konfi1000
+Konfi10000
+```
+
+\subsubsection*{c)}
+
+```{r}
+confint(vergleich,level=0.95)
+Konfi50
+Konfi100
+Konfi1000
+Konfi10000
+```
+Die Unterschiede der Konfidenzintervalle durch Bootstrapping mit dem Konfidenzintervall der linearen Regression sind verschwindend gering, deshalb ist eine Empfehlung schwierig. Wir würden uns für ein bootstrapping mit Replikationsgröße 10000 entscheiden, da hier die Unterschiede wohl am geringsten sind.
+
+Interessanterweise ist bei boot_100 das Konfidenzintervall für den Parameterschätzer der Kovariaten "Geschlecht" am unterschiedlichsten zum Konfidenzinterall der linearen Regression. Im Gegensatz zu den anderen Replikationsgrößen ist dieses Intervall nach unten verschoben. Dies schneidet sich mit der in Aufgabe 2a) aufgetretetenen Anomalie.
+
+\subsubsection*{c)}
+
+```{r}
+Konfi1000perc <- matrix(NA,6,2)
+rownames(Konfi1000perc) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
+colnames(Konfi1000perc) <- c("2,5%","97,5%")
+for(i in 1:6)
+{
+    Konfi1000perc[i,1] <- boot.ci(boot1000_1, type="perc", index = i)$perc[4]
+    Konfi1000perc[i,2] <- boot.ci(boot1000_1, type="perc", index = i)$perc[5]
+}
+Konfi1000bca <- matrix(NA,6,2)
+rownames(Konfi1000bca) <- c("Intercept","Geschlecht","Alter","Minderheit","Fremdenfeindlich","IQ")
+colnames(Konfi1000bca) <- c("2,5%","97,5%")
+for(i in 1:6)
+{
+    Konfi1000bca[i,1] <- boot.ci(boot1000_1, type="bca", index = i)$bca[4]
+    Konfi1000bca[i,2] <- boot.ci(boot1000_1, type="bca", index = i)$bca[5]
+}
+Konfi1000
+Konfi1000perc
+Konfi1000bca
+```
+
+Wir sehen hier keine großen Unterschiede in den Konfidenzintervallen. 
+
+\cleardoublepage
+
+# Shrinking Methoden
+
+## A1
+
+\subsubsection*{a)}
+
+```{r}
+linreg <- lm(lpsa~.-train, data = prostate)
+linreg_coeff <- linreg$coefficients
+```
+
+\subsubsection*{b)}
+
+```{r}
+ridgereg_0 <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 0, lambda = 0) 
+ridgereg_0_coeff = as.data.frame(as.matrix(ridgereg_0$beta))
+
+ridgereg_10 <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 0, lambda = 10) 
+ridgereg_10_coeff = as.data.frame(as.matrix(ridgereg_10$beta))
+
+ridgereg_coeffs <- data.frame(ridgereg_0_coeff, ridgereg_10_coeff, linreg_coeff)
+colnames(ridgereg_coeffs) <-  c("lambda_0", "lambda_10", "linreg")
+ridgereg_coeffs
+
+lambda_0_mean <- mean(ridgereg_coeffs$lambda_0)
+lambda_10_mean <- mean(ridgereg_coeffs$lambda_10)
+```
+
+Man sieht deutlich, dass ein größeres $\lambda$ die Koeffizienten stärker "schrumpft" als ein kleines $\lambda$ (Mittelwert der Koeffizienten für $\lambda$ = 0: `r lambda_0_mean`; für $\lambda$ = 10: `r lambda_10_mean`). Bei $\lambda$ = 0 sind die Koeffizienten (bis auf den Intercept) nahezu identisch mit den geschätzten Koeffizienten des linearen Regressionsmodells. Im Falle $\lambda$ = 10 sind zudem alle Koeffizienten positiv.
+
+\subsubsection*{c)}
+
+```{r}
+coeff_plot <- function(lambda_list, y, linear_model, alpha){
+  coeff_list <- matrix(NA, nrow = length(names(linear_model$coefficients)),
+                       ncol = length(lambda_list))
+  
+  for (i in 1:length(lambda_list)){
+    ridgereg <- glmnet(x = model.matrix(linear_model), y = y, 
+                       alpha = alpha, lambda = lambda_list[i])
+    coeff <- as.vector(ridgereg$beta)
+    coeff_list[,i] <- coeff
+  }
+  coeff_list <- as.data.frame(coeff_list)
+  colnames(coeff_list) <- lambda_list
+  coeff_list$names <- names(linear_model$coefficients)
+  return(coeff_list)
+}
+
+coeffs <- coeff_plot(lambda_list = c(0, 2, 10, 50, 100), y = prostate$lpsa, 
+                     linear_model = linreg, alpha = 0) 
+
+df1.m <- melt(coeffs,id.vars = "names")
+
+p <-   ggplot(df1.m, aes(x=variable, y=value, fill=names)) + 
+  geom_bar(stat="identity", width = 0.75) +
+    facet_grid(. ~ names) + ggtitle("Beta-Schätzer in Abhängigkeit verschiedener Lambdas")
+
+p
+```
+Negative $\beta$ werden mit größer werdendem $\lambda$ positiv. Außerdem konvergieren die $\beta$-Schätzer Richtung 0, werden aber nie genau 0 (anders als beim Lasso-Verfahren).
+
+\subsubsection*{d)}
+
+```{r}
+train = prostate[prostate$train == TRUE, ]
+test = prostate[prostate$train == FALSE, ]
+
+lambdas <- c(0, 0.09, 2)
+for (lambda in lambdas){
+    ridgereg <- glmnet(x = as.matrix(within(train, rm(lpsa))), y = train$lpsa, alpha = 0, 
+                       lambda = lambda)
+    y.true <- test$lpsa
+    y.pred <- predict.glmnet(ridgereg, newx = as.matrix(within(test, rm(lpsa))), 
+                             lambda = lambda, alpha = 0)
+    cat('\n')
+    print(lambda) 
+    cat(mean((y.true-y.pred)^2))
+    cat('\n')
+}
+```
+
+Das optimale $\lambda$ liegt im Bereich um 0.09.
+
+\subsubsection*{e)}
+
+```{r}
+lambdas <- seq(0, 2, 0.01)
+cv_glm_fit <- cv.glmnet(x = as.matrix(within(prostate, rm(lpsa))), y = prostate$lpsa, 
+                        alpha = 0, lambda = lambdas)
+opt_lambda <- cv_glm_fit$lambda.min
+
+mse <- c()
+for (lambda in lambdas){
+    ridgereg <- glmnet(x = as.matrix(within(train, rm(lpsa))), y = train$lpsa, alpha = 0, 
+                       lambda = lambda)
+    y.true <- test$lpsa
+    y.pred <- predict.glmnet(ridgereg, newx = as.matrix(within(test, rm(lpsa))), 
+                                       lambda = lambda, alpha = 0)
+    mse <- append(mse, mean((y.true-y.pred)^2))
+}
+
+lambda_mse <- NULL
+lambda_mse$lambdas <- lambdas
+lambda_mse$mse <- mse
+
+lambda_mse <- as.data.frame(lambda_mse)
+ggplot(lambda_mse, aes(x=lambdas, y=mse)) +
+    geom_point(shape=1) + 
+  ggtitle("Test-MSE in Abhängigkeit von verschiedenen Lambda-Werten")
+opt_lambda_test <- lambda_mse$lambdas[lambda_mse$mse == min(lambda_mse$mse)]
+```
+
+Der optimale Schätzer für $\lambda$ des kompletten Datensatzes beträgt laut cv.glmnet `r opt_lambda`. Dieser liegt nicht weit vom Lambda-Wert aus d) mit dem niedrigsten Test-MSE (0.09). Der Plot des Test-MSE in Abhängigkeit von verschiedenen $\lambda$-Werten spricht allerdings für ein optimales Lambdas von `r opt_lambda_test`. Diese Diskrepanz lässt sich durch zwei Faktoren erklären:
+
+1. cv.glmnet führt standardmäßig eine 10-fache Kreuzvalidierung durch, um das beste $\lambda$ zu finden. Das optimale $\lambda$ laut Test-MSE wird hier nicht über Kreuzvalidierung ermittelt.
+
+2. Wir ermitteln den Test-MSE "out-of-sample", das heißt die Daten, mit denen wir die Ridge-Regression fitten, sind unterschiedlich. 
+
+
+\subsubsection*{f)}
+
+```{r}
+linreg <- lm(lpsa~.-train, data=prostate)
+
+ridgereg <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 0, 
+                       lambda = opt_lambda)
+
+ridgereg_coeff <- as.vector(ridgereg$beta)
+coeff_df <- NULL
+coeff_df$ridgereg_coeffs <- ridgereg_coeff
+coeff_df$linreg_coeffs <- linreg_coeff
+coeff_df <- as.data.frame(coeff_df)
+
+coeff_df
+```
+
+Vergleicht man die Koeffizienten der Ridge-Regression mit den Koeffizienten der linearen Regression as a) wird der "Shrinking"-Effekt der Ridge-Regression deutlich. Nahezu alle Koeffizienten der Ridge-Regression liegen näher an der 0 als die Koeffizienten der linearen Regression (mit Ausnahme des Koeffizienten der Kovariaten "gleason").
+
+\cleardoublepage
+
+## A2
+
+\subsubsection*{a)}
+
+```{r}
+lasso_0 <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 1, 
+                       lambda = 0)
+lasso_10 <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 1, 
+                       lambda = 10)
+
+coeff_df$lasso_0_coeffs <- as.vector(lasso_0$beta)
+
+coeff_df$lasso_10_coeffs <- as.vector(lasso_10$beta)
+
+coeff_df %>% select(2:4)
+```
+
+Das Lasso-Verfahren mit $\lambda$ = 0 generiert nahezu identische $\beta$-Schätzer wie die lineare Regression. Bei $\lambda$ = 10 liegen alle "geschrumpften" $\beta$-Schätzer bereits bei 0. 
+
+\subsubsection*{b)}
+
+```{r}
+coeffs <- coeff_plot(lambda_list = c(0, 0.01, 0.1, 1), y = prostate$lpsa, 
+                     linear_model = linreg, alpha = 1) 
+
+df1.m <- melt(coeffs,id.vars = "names")
+
+p <-   ggplot(df1.m, aes(x=variable, y=value, fill=names)) + 
+  geom_bar(stat="identity", width = 0.75) +
+    facet_grid(. ~ names) + ggtitle("Beta-Schätzer in Abhängigkeit verschiedener Lambdas")
+
+p
+```
+
+Auch beim Lasso-Verfahren zeichnet sich ein ähnliches Bild ab wie bei Aufgabe 1 c). Bei größer werdendem $\lambda$ "schrumpfen" die $\beta$-Schätzer, konvergieren gegen 0 und werden, anders als bei Ridge-Regression, ab einem bestimmten $\lambda$ sogar 0. 
+
+\subsubsection*{c)}
+
+```{r}
+lambdas <- c(0, 0.002, 1)
+for (lambda in lambdas){
+    ridgereg <- glmnet(x = as.matrix(within(train, rm(lpsa))), y = train$lpsa, alpha = 1, 
+                       lambda = lambda)
+    y.true <- test$lpsa
+    y.pred <- predict.glmnet(ridgereg, newx = as.matrix(within(test, rm(lpsa))), 
+                             lambda = lambda, alpha = 1)
+    cat('\n')
+    print(lambda) 
+    cat(mean((y.true-y.pred)^2))
+    cat('\n')
+}
+```
+
+Hier scheint der "Sweet Spot" für $\lambda$ um 0.002 zu liegen.
+
+
+\subsubsection*{d)}
+
+```{r}
+lambdas <- seq(0, 1, 0.01)
+cv_glm_fit <- cv.glmnet(x = as.matrix(within(prostate, rm(lpsa))), y = prostate$lpsa, 
+                        alpha = 1, lambda = lambdas)
+opt_lambda <- cv_glm_fit$lambda.min
+
+mse <- c()
+for (lambda in lambdas){
+    ridgereg <- glmnet(x = as.matrix(within(train, rm(lpsa))), y = train$lpsa, alpha = 1, 
+                       lambda = lambda)
+    y.true <- test$lpsa
+    y.pred <- predict.glmnet(ridgereg, newx = as.matrix(within(test, rm(lpsa))), 
+                                       lambda = lambda, alpha = 1)
+    mse <- append(mse, mean((y.true-y.pred)^2))
+}
+
+lambda_mse <- NULL
+lambda_mse$lambdas <- lambdas
+lambda_mse$mse <- mse
+
+lambda_mse <- as.data.frame(lambda_mse)
+ggplot(lambda_mse, aes(x=lambdas, y=mse)) +
+    geom_point(shape=1) + 
+    ggtitle("Test-MSE in Abhängigkeit von verschiedenen Lambda-Werten")
+opt_lambda_test <- lambda_mse$lambdas[lambda_mse$mse == min(lambda_mse$mse)]
+```
+
+Hier liegt der optimale Wert für $\lambda$ für den kompletten Datensatz bei `r opt_lambda`. Dieser Wert liegt wieder sehr nahe am ermittelten Optimum aus c). Plottet man den Test-MSE (out-of-sample) in Abhängigkeit verschiedener $\lambda$-Werte, kommt man allerdings auf ein ein optimalen $\lambda$-Wert von `r opt_lambda_test`. Dies liegt wieder an den gleichen Gründen, wie in Aufgabe 1 e).
+
+\subsubsection*{e)}
+
+```{r}
+lasso <- glmnet(x = model.matrix(linreg), y = prostate$lpsa, alpha = 1, 
+                       lambda = opt_lambda)
+
+lasso_coeff <- as.vector(lasso$beta)
+coeff_df$lasso_coeff <- lasso_coeff
+
+coeff_df %>% select(2, 5)
+```
+
+Wie bereits in Aufgabe 1 ist beim Lasso-Verfahren gut zu erkennen, dass die Koeffizienten im Vergleich zur linearen Regression aus Aufgabe 1 a) "geschrumpft" werden und näher an der 0 liegen. Anders als bei der Ridge-Regression sind beim Lasso-Verfahren zwei $\beta$-Schätzer tatsächlich 0 geworden (lcp und gleason).
+
+\cleardoublepage
+
+# PCA/PLS Regression
+
+## A1
+
+\subsubsection*{a)}
+
+```{r}
+data = subset(prostate, select=c(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45))
+cmat = cor(data)
+kable(cmat, align = 'c', digits = 3)
+```
+
+Man erkennt, dass "pgg45" und "lcavol" am stärksten mit anderen Variablen korrelieren. Insbesondere "pgg45" und "gleason" weisen eine hoh positive Korrelation von $0.752$ auf. 
+Wenn wir Variablen mit hoher Korrelation als Prädiktor in das Modell hinzufügen, dann werden die Regressionskoeffizienten davon stark beeinflusst. Diese Multikollinearität ist insofern schlecht, da die Prognose dadurch in Richtungen gezerrt wird, die vom eigentlichen Ergebnis abweicht. Um dies zu vermeiden gibt es neben Variablen aus dem Modell nehmen verschiedene Verfahren. In Übung 4 nutze man dazu Ridge/Lasso Regression. Hier nun andere Methoden.
+
+\subsubsection*{b)}
+
+```{r}
+data = subset(
+  prostate, 
+  select = c(lcavol, lweight, age, lbph, svi, lcp, gleason, pgg45, lpsa)
+)
+pcr = pcr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = data,
+  validation = "CV",
+  scale = TRUE
+)
+summary(pcr)
+```
+
+Wir sehen hier, dass wir mit 4 Hauptkomponenten schon $82.71 \%$ der Varianz erklären können. Danach steigt die zunahme der erklärten Varianz nur noch langsam. Bis zu 6 Hauptkomponenten könnte man noch sinnvoll in das Modell mit aufnehmen. Mehr würde dem eigentlich Sinn widersprechen die Anzahl an Prädiktoren zu senken, um Multikolinearität zu reduzieren.
+
+\subsubsection*{c)}
+
+In der Summary bekommen wir zu den Cross-Validations den RMSEP (Root Mean Squared Error) mit ausgegeben. Wir erhalten den kleinsten Fehler mit $0.7583$ für 8 Hauptkomponenten. Dies ist verständlich, da mit allen Hauptkomponenten auch 100\% der Varianz erklärt werden. Dies heißt aber nicht, dass das Modell dann auf einem anderen (unter Umständten stark unterschiedlichen) Datensatz immer noch die besten Ergebnisse liefert.
+
+\subsubsection*{d)}
+
+```{r}
+validationplot(pcr, val.type = "MSEP")
+```
+
+Sinnvoll ist es eine Anzahl an Hauptkomponenten zu wählen, wo sich nicht mehr viel ändert. Dies kann man anhand eines Plot mittels Elbow-Methode erreichen. Sprich wir schauen, wo auf der Kurve etwa der Ellbogen liegt und nehmen dann den Wert an dieser stelle. Schauen wir uns den Plot an, so erscheint es sinnvoll sich für $3$ Hauptkomponenten zu entscheiden.
+
+\cleardoublepage
+
+\subsubsection*{e)}
+
+```{r}
+train = prostate[prostate$train == TRUE, ]
+test = prostate[prostate$train == FALSE, ]
+pcr = pcr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = train,
+  scale = TRUE
+)
+
+y.true = test$lpsa
+y.pred = predict(pcr, test, ncomd = 3)
+
+MSE = mean((y.true - y.pred)^2)
+MSE = round(MSE, 3)
+MSE
+```
+
+Wir erhalten einen MSE von $`r MSE`$. 
+Vergleichen wir den Wert mit den Ergebnissen aus der letzten Übung, so stellen wir fest, dass der MSE etwa auf gleichem Niveau ist, wie der von Ridge/Lasso-Regression. Mittels Parametertuning lässt sich bei den anderen Regressionsverfahren ein besseres Ergebnis erreichen, aber dafür ist dafür auch in deutlich höhrer Aufwand nötig. Die Ergebnisse der PCA sind für den gegebenen Aufwand sehr gut.
+
+\cleardoublepage
+
+## A2
+
+\subsubsection*{a)}
+
+```{r}
+data = subset(
+  prostate, 
+  select = c(lcavol, lweight, age, lbph, svi, lcp, gleason, pgg45, lpsa)
+)
+plsr = plsr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = data,
+  validation = "CV",
+  scale = TRUE
+)
+summary(plsr)
+```
+
+\subsubsection*{b)}
+
+Hier sinkt der Fehler schneller im Vergleich zur PCA. Der geringste Fehler ist $0.7411$ für 3 Komponenten.
+
+\subsubsection*{c)}
+
+```{r}
+validationplot(plsr, val.type = "MSEP")
+```
+
+Nach der Elbow-Methode bieten sich hier 2 Komponenten an.
+
+\subsubsection*{d)}
+
+```{r}
+train = prostate[prostate$train == TRUE, ]
+test = prostate[prostate$train == FALSE, ]
+plsr = plsr(
+  lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + pgg45,
+  data = train,
+  scale = TRUE
+)
+
+y.true = test$lpsa
+y.pred = predict(plsr, test, ncomd = 2)
+
+MSE = mean((y.true - y.pred)^2)
+MSE = round(MSE, 3)
+MSE
+```
+
+Wir erhalten einen MSE von $`r MSE`$.
+Dieser Wert ist besser als das Ergebnis von Aufgabe 1 und näher an den Ridge/Lasso-Regression Werten aus der vorherigen Übung aber nicht besser als diese. Das macht auch Sinn, da PLSR vom Aufwand her zwischen PSA und Ridge/Lasso-Regression liegt.
+
+\cleardoublepage
+
+# Zufallszahlen
+
+## A1 
+
+\subsubsection*{a)}
+
+```{r}
+gv <- runif(10000,min=0,max=1)
+lambda <- 3
+invexp <- -(1/lambda)*log(gv)
+exp <- rexp(10000,lambda)
+
+invpois = NULL
+for (i in 1:10000){
+j <- 0
+U <- runif(1,0,1)
+Y <- -(1/lambda)*log(U)
+sum <- Y
+
+while(sum < 1){
+U <-  runif(1,min = 0,max = 1) 
+Y <- -(1/lambda)*log(U)
+sum <-  sum + Y
+j <-  j + 1; 
+}
+
+invpois <- rbind(invpois,j)
+}
+
+pois <-  rpois(10000,lambda)
+
+par(mfrow=c(1,2))
+
+hist(invexp)
+hist(exp)
+
+hist(invpois)
+hist(pois)
+
+qqplot(invexp,exp)
+qqplot(invpois,pois)
+```
+
+Es zeigt sich dass sich die Inversionsverfahren bei n=10000 relativ gut den zugrundeliegenden Verteilungen annähern.
+
+\subsubsection*{b)}
+
+```{r}
+u <- runif(10000,0,1)
+v <- runif(10000,0,1)
+
+bmnorm = cos(2*pi*u)*sqrt(-log(v))
+norm <- rnorm(10000)
+
+par(mfrow=c(1,2))
+hist(bmnorm,xlim=c(-4,4))
+hist(norm, xlim=c(-4,4))
+qqplot(bmnorm,norm)
+```
+
+Es zeigt sich eine Normalverteilung der transformierten gleichverteilten Zufallszahlen durch die die Transformationsformel. Da die Standardabweichung der durch die Box-Müller Methode erzeugten Zufallszahlen `r sd(bmnorm)` ist, ist das Histogramm im Vergleich zu den von R erzeugten normalverteilten Zufallszahlen "schmaler". Da rnorm standardmäßig standardnormalverteilte Zufallszahlen erzeugt, sieht man hier deutliche Unterschiede.
+
+## A2
+
+\subsubsection*{a)}
+
+```{r}
+randomorg <- read.csv('res/randomorg.csv',header=FALSE)
+randomorg <- randomorg[,"V1"]
+```
+
+\subsubsection*{b)}
+
+```{r}
+midsqr = function(seed, length) {
+    ergebnis = c()
+    for(i in 1:length) {
+        value = seed * seed 
+        seed = (value %/% 10000) %% 10000000
+       ergebnis = c(ergebnis, seed/10000000)
+    }   
+    return(ergebnis)
+}
+midsqr = midsqr(2222222222222,10000)
+```
+
+\subsubsection*{c)}
+
+```{r}
+standardize <- function(x){(x-min(x))/(max(x)-min(x))}
+
+baumannikov_zwirbler <- function(seed, n){
+  if((seed %% 2) == 0){
+    seed <- seed +1
+  }
+  start <- as.character((seed*n)^2)
+  save <- c()
+  for (i in 1:(n)){
+    if (i == 1){
+      x <- start
+      k <- nchar(x)
+      y <- as.numeric(substr(as.numeric(x), round(0.25*k), round(0.75*k)))
+      save[i] <- y
+    }
+    else{
+      x <- as.character((save[i-1]*n)^2)
+      k <- nchar(x)
+      y <- as.numeric(substr(as.numeric(x), round(0.25*k), round(0.75*k)))
+      save[i] <- y
+    }
+  }
+  return(standardize(save%%100))
+}
+
+baumannikov_zwirbler <- baumannikov_zwirbler(22222222, 10000)
+```
+
+\subsubsection*{d)}
+
+```{r}
+set.seed(42, kind='Mersenne-Twister')
+mersenne <- runif(10000)
+
+set.seed(42, kind='Super-Duper')
+superduper <- runif(10000)
+```
+
+\subsubsection*{e)}
+
+```{r}
+ro1 <- randomorg[-length(randomorg)]
+ro2 <- randomorg[-1]
+plot(ro1,ro2, main="RandomOrg")
+
+ms1 <- midsqr[-length(midsqr)]
+ms2 <- midsqr[-1]
+plot(ms1,ms2, main="Midsquare")
+
+bz1 <- baumannikov_zwirbler[-length(baumannikov_zwirbler)]
+bz2 <- baumannikov_zwirbler[-1]
+plot(bz1, bz2, main="Baumannikov-Zwirbler")
+
+me1 <- mersenne[-length(mersenne)]
+me2 <- mersenne[-1]
+plot(me1,me2, main="Mersenne")
+
+sd1 <- superduper[-length(superduper)]
+sd2 <- superduper[-1]
+plot(sd1,sd2, main="SuperDuper")
+```
+
+```{r, fig.height = 8}
+par(mfrow=c(3,2))
+hist(randomorg)
+hist(midsqr)
+hist(baumannikov_zwirbler)
+hist(mersenne)
+hist(superduper)
+
+par(mfrow=c(2,2))
+qqplot(randomorg,midsqr)
+qqplot(randomorg,baumannikov_zwirbler)
+qqplot(randomorg,mersenne)
+qqplot(randomorg,superduper)
+qqplot(midsqr,baumannikov_zwirbler)
+qqplot(midsqr,mersenne)
+qqplot(midsqr,superduper)
+qqplot(baumannikov_zwirbler,mersenne)
+qqplot(baumannikov_zwirbler,superduper)
+qqplot(mersenne,superduper)
+```
+
+Die Scatterplots der ZweierTupel zeigen eine zufällige Verteilung der Zufallszahlen bis auf die Methode des Mittquadrat Verfahrens von Neumann. Bei diesem zeigt sich eine deutliche Überverteilung der Zahlen bei (0,0). Die Histogramme bestätigen dieses Bild. Auch die QQPlots zeigen die Schwäche des Mittquadrat Verfahrens von Neumann im Vergleich zu den anderen Zufallsgeneratoren.
+
+```{r, echo = FALSE}
+set.seed(42)
+```
+
+\cleardoublepage
+
+# Monte-Carlo-Simulation
+
+## A1
+
+```{r}
+zi = function(xi, yi) {
+  out = 4 * ifelse(xi^2 + yi^2 <= 1, 1, 0)
+  return(out)
+}
+
+simpi = function(n) {
+  xi = runif(n, -1, 1)
+  yi = runif(n, -1, 1)
+  z = zi(xi, yi)
+  out = mean(z)
+  return(out)
+}
+```
+
+```{r}
+pimat = matrix(NA, nrow = 8, ncol = 3)
+for (k in seq(8)) {
+  z = simpi(10^k)
+  pimat[k, 1] = k
+  pimat[k, 2] = z
+  pimat[k, 3] = round(abs(pi - z), 6)
+}
+df_pi = data.frame(pimat)
+colnames(df_pi) = c("k", "z", "e")
+kable(df_pi, align = "c")
+```
+
+\cleardoublepage
+
+Um mit Chebyshev abschätzen zu können benötigen wir Erwartungswert und Varianz der Zufallsvariablen $z_i$.
+Der Erwartungswert sollte mit $\pi$ übereinstimmen. Wir rechnen nach. Sei dazu $z_1$ die Approximation von $\pi$ mittels des Einheitskreises im Einheitsquadrat eingeschränkt auf den 1. Quadranten.
+
+\begin{align}
+\E(z_i)
+& = \E(4 z_1)
+= 4 \E(z_i)
+= 4 \int_0^1 \sqrt{1 - x^2}\ dx = 4 \frac \pi 4 = \pi
+\end{align}
+
+\begin{align}
+\V(z_i)
+& = \V(4 z_1)
+= 16 \E(z_i)\\
+& = 16 \int_0^1 \sqrt{1 - x^2}^2\ dx - 16 \left(  \int_0^1 \sqrt{1 - x^2}\ dx\right)^2\\
+& = 16 \int_0^1 1-x^2\ dx - 16 \frac{\pi^2}{16}
+= 16 \left[ x - \frac 1 3 x^3 \right]_0^1 - \pi^2\\
+& = \frac{32}{3} - \pi^2 \approx 0.797
+\end{align}
+
+Damit erhalten wir dann für $\bar z$:
+
+\begin{align}
+& \E(\bar z)
+= \E\left(\frac 1 n \sum_{i=1}^n z_i \right)
+= \frac 1 n n \E(z_i) = \E(z_i) = \pi\\
+& \V(\bar z)
+= \V \left(\frac 1 n \sum_{i=1}^n z_i \right)
+= \frac{1}{n^2} \left(\sum_{i=1}^n z_i \right)
+= \frac{n}{n^2} \V(z_i)
+= \frac{1}{n} \V(z_i) \approx \frac{0.797}{n}
+\end{align}
+
+Nach Chebyshev gilt nun für einen beliebigen Fehler $\varepsilon$ und $\sigma^2 = \V(z_i)$:
+
+\begin{align}
+& \Pr\left( \vert \bar z - \pi \vert \geq \varepsilon \right)
+\leq \frac{\V(\bar z)}{\varepsilon^2} \\
+\implies
+& \Pr\left( \vert \bar z(n) - \pi \vert \geq \varepsilon \right)
+\leq \frac{\sigma^2}{n^2 \varepsilon^2} = \frac{\sigma}{n \varepsilon}
+\end{align}
+
+Nun gilt es zu bedenken, dass die Abschätzung zwar für alle $\varepsilon > 0$ gilt, aber nur für $n \varepsilon^2 > \sigma^2$ wirklich Sinn macht. Sprich es macht nur Sinn zu prüfen, wie hoch die Chance ist, dass man ein Vielfaches der Standardabweichung vom Mittelwert abweicht.
+Wie man an der Abschätzung erkennen kann, sinkt die Genauigkeit, dass wir um mehr als einen gegebenen Fehler abweichen mit zunehmenden $n$. Das heißt insbesondere, dass mit höheren $n$ der Fehler sinkt. Dies können wir anhand der Tabelle bestätigen.
+
+\cleardoublepage
+
+## A2
+
+\subsubsection*{a)}
+
+```{r}
+simsnd = function(n) {
+  x = runif(n, -1.96, 1.96)
+  phi = dnorm(x)
+  out = 2 * 1.96 * mean(phi)
+  return(out)
+}
+```
+
+```{r}
+sndmat = matrix(NA, nrow = 8, ncol = 3)
+for (k in seq(8)) {
+  z = simsnd(10^k)
+  sndmat[k, 1] = k
+  sndmat[k, 2] = z
+  sndmat[k, 3] = round(abs(0.95 - z), 6)
+}
+df_snd = data.frame(sndmat)
+colnames(df_snd) = c("k", "z", "e")
+kable(df_snd, align="c")
+```
+
+Hier sehen wir , dass es ab etwa $10^6$ Versuchen sehr präzise wird.
+
+\cleardoublepage
+
+\subsubsection*{b)}
+
+```{r}
+nexp = 10
+M = matrix(NA, nrow = nexp, ncol = 4)
+for (k in seq(5,7)) {
+  for (i in seq(nexp)) {
+    z = simsnd(10^k)
+    M[i, 1] = i
+    M[i,k - 3] = z
+  }
+}
+df = data.frame(M)
+colnames(df) = c("i", "5", "6", "7")
+ggdf = gather(df, "k", "P", seq(2,4))
+gg = ggplot(
+  data = ggdf,
+  mapping = aes(x = i, y = P, group = k, col = k)
+)
+gg = gg + xlab("Iteration") + ylab("P")
+gg = gg + geom_point() 
+gg = gg + stat_smooth(method = "gam", formula = y ~ s(x, bs='cr'), se = FALSE)
+gg = gg + theme(
+  axis.title.x=element_blank(),
+  axis.text.x=element_blank(),
+  axis.ticks.x=element_blank()
+)
+```
+
+\cleardoublepage
+
+```{r}
+gg
+```
+
+In der Abbildung können wir erkennen, dass für $k = 5 \implies n = 10^5$ es noch eine signifikante Streuung um den erwarteten Wert von $P = 0.95$ gibt. Um dies graphisch besser darzustellen haben wir einen kubischen Regressionspline durch die Punkte gezogen. Man erkennt für $k = 5$ deutliche Abweichungen, während für $k = \lbrace 6,7 \rbrace$ der Spline eher eine Gerade am erwarteten Wert ist.
+Erinnern wir uns an die Abschätzung mit Chebyshev aus Aufgabe 1, so sollten wir auch hier eine ähnliche Abschäzung erhalten (da analoges Vorgehen) und da die Wahrscheinlichkeit von Mittelwert abzuweichen mit dem Produkt aus Fehler und $n$ sinkt, braucht es schon ein hohes $n$, um möglichst kleine Fehler zu garantieren.
+
+\cleardoublepage
+
+## A3
+
+```{r}
+u1 = function(x,y) {
+  if (x^2 / 49 + y^2 / 9 - 1 <= 0) {
+    if (abs(x) >= 4 && y >= -(3 * sqrt(33))/7 && y <= 0) {
+      return(1)
+    } else {
+      if (abs(x) >= 3 && y >= 0) {
+        return(1)
+      }
+    }
+  }
+  return(0)
+}
+u2 = function(x,y) {
+  if (y >= -3 && y <= 0 && -4 <= x && x <= 4) {
+    if (-((3*sqrt(33)-7)*x^2)/112 + abs(x)/2 + sqrt(1-(abs(abs(x)-2)-1)^2) -y - 3 <= 0) {
+      return(1)
+    }
+  }
+  return(0)
+}
+u3 = function(x,y) {
+  if (y >= 0 && 3/4 <= abs(x) && abs(x) <= 1) {
+    if (-8*abs(x) - y + 9 >= 0) {
+      return(1)
+    }
+  }
+  return(0)
+}
+u4 = function(x,y) {
+  if (1/2 <= abs(x) && abs(x) <= 3/4 && 3 * abs(x) - y + 3/4 >= 0 && y >= 0) {
+    return(1)
+  }
+  return(0)
+}
+u5 = function(x,y) {
+  if (abs(x) <= 1/2 && y >= 0 && 9/4 - y >= 0) {
+    return(1)
+  }
+  return(0)
+}
+u6 = function(x,y) {
+  if (1 <= abs(x) && abs(x) <= 3 && y >= 0) {
+    if (-abs(x)/2 - 3/7 * sqrt(10)*sqrt(4 - (abs(x) -1)^2) -y + 6*sqrt(10)/7 + 3/2 >= 0) {
+      return(1)
+    }
+  }
+  return(0)
+}
+
+u = function(x,y) {
+  if (u1(x,y) == 1) {
+    return(1)}
+  if (u2(x,y) == 1) {
+    return(1)}
+  if (u3(x,y) == 1) {
+    return(1)}
+  if (u4(x,y) == 1) {
+    return(1)}
+  if (u5(x,y) == 1) {
+    return(1)}
+  if (u6(x,y) == 1) {
+    return(1)}
+  return(0)
+}
+
+batman = function(n) {
+  x = runif(n, -7, 7)
+  y = runif(n, -4, 4)
+  df = data.frame(x = double(), y = double(), z = double())
+  for (i in seq(n)) {
+    z = u(x[i], y[i])
+    df = rbind(df, c(x[i], y[i], z))
+  }
+  colnames(df) = c("x", "y", "z")
+  return(df)
+}
+```
+
+```{r}
+n = 10^5
+df = batman(n)
+```
+
+\cleardoublepage
+
+\subsubsection*{a)}
+
+```{r}
+gg = ggplot(
+  data = df[df$z == 1,],
+  mapping = aes(
+    x = x,
+    y = y
+  )
+)
+gg = gg + geom_point(size = 1)
+gg = gg + theme(
+  axis.title.x=element_blank(),
+  axis.text.x=element_blank(),
+  axis.ticks.x=element_blank(),
+  axis.title.y=element_blank(),
+  axis.text.y=element_blank(),
+  axis.ticks.y=element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_blank()
+)
+gg
+```
+
+Es ist Batman. Für `geom_point(size = 1)` sogar Space Batman.
+
+\subsubsection*{b)}
+
+```{r}
+meanz = mean(df$z)
+A = 14 * 8 * meanz
+A = round(A,2)
+```
+
+Der Space Batman hat einen approximativen Flächeninhalt von $A = `r A`$.
