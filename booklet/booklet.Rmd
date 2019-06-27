@@ -14,10 +14,10 @@ includes:
 - \usepackage{textcomp}
 - \usepackage{microtype}
 - '\renewcommand{\sectionmark}[1]{\markright{\thesection~- ~#1}}'
-- \renewcommand{\rmdefault}{pplx}
-- \newcommand{\E}{\operatorname{E}}
-- \newcommand{\V}{\operatorname{V}}
-- \renewcommand{\Pr}{\operatorname{P}}
+- '\renewcommand{\rmdefault}{pplx}'
+- '\newcommand{\E}{\operatorname{E}}'
+- '\newcommand{\V}{\operatorname{V}}'
+- '\renewcommand{\Pr}{\operatorname{P}}'
 KOMAoptions:
 - footsepline = true
 - headsepline = true
@@ -47,14 +47,17 @@ h1 {
 </style>
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(error=TRUE,        # Keep compiling upon error
-                      collapse=TRUE,     # collapse by default
-                      echo=TRUE,         # echo code by default
-                      comment = "#>",    # change comment character
-                      fig.width = 10,     # set figure width
-                      out.width = "100%", # set width of displayed images
-                      warning=FALSE,      # show R warnings
-                      message=FALSE)     # show R messages
+library(knitr)
+knitr::opts_chunk$set(
+  error=TRUE,
+  collapse=TRUE,
+  echo=TRUE,
+  comment = "#>",
+  fig.width = 10,
+  out.width = '\\textwidth',
+  warning=FALSE,
+  message=FALSE
+)
 ```
 
 <!---** Hochschule Darmstadt | Studiengang Data Science | Sommersemester 2019 **--->
@@ -1174,16 +1177,16 @@ Um mit Chebyshev abschätzen zu können benötigen wir Erwartungswert und Varian
 Der Erwartungswert sollte mit $\pi$ übereinstimmen. Wir rechnen nach. Sei dazu $z_1$ die Approximation von $\pi$ mittels des Einheitskreises im Einheitsquadrat eingeschränkt auf den 1. Quadranten.
 
 \begin{align}
-\E(z_i)
+\E (z_i)
 & = \E(4 z_1)
 = 4 \E(z_i)
 = 4 \int_0^1 \sqrt{1 - x^2}\ dx = 4 \frac \pi 4 = \pi
 \end{align}
 
 \begin{align}
-\V(z_i)
+\V (z_i)
 & = \V(4 z_1)
-= 16 \E(z_i)\\
+= 16 \V (z_i)\\
 & = 16 \int_0^1 \sqrt{1 - x^2}^2\ dx - 16 \left(  \int_0^1 \sqrt{1 - x^2}\ dx\right)^2\\
 & = 16 \int_0^1 1-x^2\ dx - 16 \frac{\pi^2}{16}
 = 16 \left[ x - \frac 1 3 x^3 \right]_0^1 - \pi^2\\
@@ -1210,7 +1213,7 @@ Nach Chebyshev gilt nun für einen beliebigen Fehler $\varepsilon$ und $\sigma^2
 \leq \frac{\V(\bar z)}{\varepsilon^2} \\
 \implies
 & \Pr\left( \vert \bar z(n) - \pi \vert \geq \varepsilon \right)
-\leq \frac{\sigma^2}{n^2 \varepsilon^2} = \frac{\sigma}{n \varepsilon}
+\leq \frac{\sigma^2}{n \varepsilon^2}
 \end{align}
 
 Nun gilt es zu bedenken, dass die Abschätzung zwar für alle $\varepsilon > 0$ gilt, aber nur für $n \varepsilon^2 > \sigma^2$ wirklich Sinn macht. Sprich es macht nur Sinn zu prüfen, wie hoch die Chance ist, dass man ein Vielfaches der Standardabweichung vom Mittelwert abweicht.
