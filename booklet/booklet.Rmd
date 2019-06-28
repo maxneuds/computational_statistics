@@ -554,7 +554,7 @@ Die Unterschiede der Konfidenzintervalle durch Bootstrapping mit dem Konfidenzin
 
 Interessanterweise ist bei boot_100 das Konfidenzintervall für den Parameterschätzer der Kovariaten "Geschlecht" am unterschiedlichsten zum Konfidenzinterall der linearen Regression. Im Gegensatz zu den anderen Replikationsgrößen ist dieses Intervall nach unten verschoben. Dies passt zu der in Aufgabe 2a) aufgetretetenen Anomalie.
 
-\subsubsection*{c)}
+\subsubsection*{d)}
 
 ```{r}
 Konfi1000perc <- matrix(NA,6,2)
@@ -846,7 +846,7 @@ cmat = cor(data)
 kable(cmat, align = 'c', digits = 3)
 ```
 
-Man erkennt, dass "pgg45" und "lcavol" am stärksten mit anderen Variablen korrelieren. Insbesondere "pgg45" und "gleason" weisen eine hoh positive Korrelation von $0.752$ auf. 
+Man erkennt, dass "pgg45" und "lcavol" am stärksten mit anderen Variablen korrelieren. Insbesondere "pgg45" und "gleason" weisen eine hohe positive Korrelation von $0.752$ auf. 
 Wenn wir Variablen mit hoher Korrelation als Prädiktor in das Modell hinzufügen, dann werden die Regressionskoeffizienten davon stark beeinflusst. Diese Multikollinearität ist insofern schlecht, da die Prognose dadurch in Richtungen gezerrt wird, die vom eigentlichen Ergebnis abweicht. Um dies zu vermeiden gibt es neben Variablen aus dem Modell nehmen verschiedene Verfahren. In Übung 4 nutze man dazu Ridge/Lasso Regression. Hier nun andere Methoden.
 
 \subsubsection*{b)}
